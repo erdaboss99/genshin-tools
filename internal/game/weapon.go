@@ -15,6 +15,17 @@ var ascensionCaps = [...]Level{20, 40, 50, 60, 70, 80, 90}
 // maxAscension is the highest ascension phase.
 const maxAscension = len(ascensionCaps) - 1
 
+// AscensionForCap returns the ascension phase whose level cap is cap, or -1 when
+// no phase has that cap.
+func AscensionForCap(cap Level) int {
+	for ascension, c := range ascensionCaps {
+		if c == cap {
+			return ascension
+		}
+	}
+	return -1
+}
+
 // checkLevelAscension reports whether a level can exist at an ascension phase. A
 // character or weapon at a level cap can be on either side of the ascension.
 func checkLevelAscension(level Level, ascension int) error {
