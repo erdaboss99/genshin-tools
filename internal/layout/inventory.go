@@ -21,6 +21,15 @@ func (g Grid) RowsPerPage(w Window) int {
 	return max((w.ReferenceHeight()-g.VerticalPadding)/g.DeltaY, 1)
 }
 
+// Browse is the part of an inventory screen needed to walk through its items: where
+// the grid is, where the item count is printed, and the detail panel that changes
+// when an item is selected.
+type Browse struct {
+	Grid      Grid `json:"grid"`
+	ItemCount Box  `json:"itemCount"`
+	Panel     Box  `json:"panel"`
+}
+
 // Inventory locates the artifact inventory screen.
 type Inventory struct {
 	Grid      Grid `json:"grid"`
@@ -43,4 +52,9 @@ type Inventory struct {
 	// StarMinArea and StarMaxArea bound one rarity star's size in reference pixels.
 	StarMinArea int `json:"starMinArea"`
 	StarMaxArea int `json:"starMaxArea"`
+}
+
+// Browse returns what the walker needs from the artifact screen.
+func (i Inventory) Browse() Browse {
+	return Browse{Grid: i.Grid, ItemCount: i.ItemCount, Panel: i.Panel}
 }

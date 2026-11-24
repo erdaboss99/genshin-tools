@@ -137,7 +137,7 @@ func (s *simulatedInventory) itemIn(frame *image.RGBA) int {
 func (s *simulatedInventory) walker() InventoryWalker {
 	return InventoryWalker{
 		Game:   s,
-		Layout: layout.Inventory{Grid: s.grid, Panel: s.panel},
+		Layout: layout.Browse{Grid: s.grid, Panel: s.panel},
 		Count:  s.artifacts,
 		IsMaterial: func(_ context.Context, frame *image.RGBA) (bool, error) {
 			return s.itemIn(frame) >= s.artifacts, nil

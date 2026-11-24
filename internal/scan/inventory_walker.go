@@ -17,10 +17,10 @@ import (
 // MaterialCheck reports whether a frame shows an upgrade material, not an artifact.
 type MaterialCheck func(ctx context.Context, frame *image.RGBA) (bool, error)
 
-// InventoryWalker clicks through the artifact grid and captures each item.
+// InventoryWalker clicks through an inventory grid and captures each item.
 type InventoryWalker struct {
 	Game   control.Game
-	Layout layout.Inventory
+	Layout layout.Browse
 	OCR    ocr.Recognizer
 	// IsMaterial reports whether a frame shows an upgrade material.
 	IsMaterial MaterialCheck

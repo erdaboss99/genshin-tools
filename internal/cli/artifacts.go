@@ -108,7 +108,7 @@ func (a *app) artifactSource(ctx context.Context, opts artifactOptions, engine e
 	}
 	return scan.InventoryWalker{
 		Game:       game,
-		Layout:     engine.layout.Inventory,
+		Layout:     engine.layout.Inventory.Browse(),
 		OCR:        engine.ocr,
 		IsMaterial: parser.IsUnrelated,
 		Pace:       scan.Pace(opts.pace),
