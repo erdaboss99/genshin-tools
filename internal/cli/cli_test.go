@@ -318,3 +318,37 @@ func TestExportGOODIncludesWeapons(t *testing.T) {
 		t.Errorf("summary = %q", stdout)
 	}
 }
+
+func TestExportGOODIncludesCharacters(t *testing.T) {
+	dir := t.TempDir()
+	characters := filepath.Join(dir, "characters.json")
+	output := filepath.Join(dir, "good.json")
+
+	valid := game.Character{Key: "HuTao", Level: 90, Ascension: 6, Constellation: 1, Talent: game.Talents{Auto: 10, Skill: 10, Burst: 10}}
+	records := []scan.CharacterRecord{
+		{Index: 0, Character: valid},
+		{Index: 1, Character: valid, Issues: []string{"no constellation data"}},
+		{Index: 2, Character: game.Character{Level: 1}},
+	}
+	if err := scan.WriteJSON(characters, scan.NewReport(records, true)); err != nil {
+		t.Fatal(err)
+	}
+	code, stdout, stderr := run(t, "export", "good", "--characters", characters, "-o", output)
+	if code != 0 {
+		t.Fatalf("export failed: %s", stderr)
+	}
+	raw, err := os.ReadFile(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc export.GOOD
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		t.Fatal(err)
+	}
+	if len(doc.Characters) != 1 || doc.Characters[0] != valid {
+		t.Errorf("characters = %+v", doc.Characters)
+	}
+	if !strings.Contains(stdout, "1 characters") {
+		t.Errorf("summary = %q", stdout)
+	}
+}
