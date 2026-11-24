@@ -38,7 +38,12 @@ func (r reader) readRect(rect image.Rectangle, mode ocr.Mode, allow string) (str
 
 // readRectScaled is readRect with an explicit enlargement factor.
 func (r reader) readRectScaled(rect image.Rectangle, mode ocr.Mode, allow string, scale int) (string, error) {
-	img := imaging.PrepareForOCR(r.frame, rect, scale)
+	return r.readRectChannel(rect, mode, allow, scale, imaging.Darkest)
+}
+
+// readRectChannel is readRectScaled with a choice of colour channel.
+func (r reader) readRectChannel(rect image.Rectangle, mode ocr.Mode, allow string, scale int, c imaging.Channel) (string, error) {
+	img := imaging.PrepareChannelForOCR(r.frame, rect, scale, c)
 	return r.ocr.Recognize(r.ctx, ocr.Request{Image: img, Mode: mode, Allow: allow})
 }
 
