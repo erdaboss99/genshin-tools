@@ -219,6 +219,12 @@ func (p ArtifactParser) countRarity(r reader) game.Rarity {
 }
 
 func (p ArtifactParser) resolveLocation(text string) game.CharacterKey {
+	return resolveLocation(p.Catalog, p.TravelerName, text)
+}
+
+// resolveLocation turns the "Equipped: Name" text of an artifact or weapon into a
+// character key, or "" when nothing is equipped or the name can't be matched.
+func resolveLocation(cat *catalog.Catalog, travelerName, text string) game.CharacterKey {
 	text = strings.TrimSpace(text)
 	if i := strings.IndexByte(text, ':'); i >= 0 {
 		text = text[i+1:]
@@ -226,10 +232,10 @@ func (p ArtifactParser) resolveLocation(text string) game.CharacterKey {
 	if fuzzy.Normalize(text) == "" {
 		return ""
 	}
-	if p.TravelerName != "" && fuzzy.Ratio(text, p.TravelerName) >= minOverrideScore {
+	if travelerName != "" && fuzzy.Ratio(text, travelerName) >= minOverrideScore {
 		return game.CharacterTraveler
 	}
-	if match, ok := p.Catalog.MatchCharacter(text); ok {
+	if match, ok := cat.MatchCharacter(text); ok {
 		return game.CharacterKey(game.ToKey(match.Item))
 	}
 	return ""
