@@ -117,3 +117,42 @@ func TestReadPaimonMoe(t *testing.T) {
 		t.Error("a non-numeric category must be rejected")
 	}
 }
+
+func TestBuildGOODAllSections(t *testing.T) {
+	doc, rejected := BuildGOOD(GOODInput{
+		Weapons: []game.Weapon{
+			{Key: "MistsplitterReforged", Level: 90, Ascension: 6, Refinement: 1, Location: "Kamisato Ayaka"},
+			{Key: "", Level: 1, Refinement: 1},
+		},
+		Characters: []game.Character{{Key: "HuTao", Level: 90, Ascension: 6, Constellation: 1, Talent: game.Talents{Auto: 10, Skill: 10, Burst: 10}}},
+		Materials:  map[string]int{"MoraAndCrown": 12, "Bad": 0},
+	})
+	if len(rejected) != 2 {
+		t.Errorf("rejected = %v, want the unknown weapon and the empty material", rejected)
+	}
+	raw, err := json.Marshal(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(raw)
+	for _, want := range []string{
+		`"weapons":[{"key":"MistsplitterReforged","level":90,"ascension":6,"refinement":1,"location":"Kamisato Ayaka"}]`,
+		`"characters":[{"key":"HuTao","level":90,"ascension":6,"constellation":1,"talent":{"auto":10,"skill":10,"burst":10}}]`,
+		`"materials":{"MoraAndCrown":12}`,
+		`"artifacts":[]`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %s in %s", want, got)
+		}
+	}
+}
+
+func TestBuildGOODOmitsEmptySections(t *testing.T) {
+	doc, _ := NewGOOD(nil)
+	raw, _ := json.Marshal(doc)
+	for _, key := range []string{"weapons", "characters", "materials"} {
+		if strings.Contains(string(raw), key) {
+			t.Errorf("%s must be omitted when empty: %s", key, raw)
+		}
+	}
+}
