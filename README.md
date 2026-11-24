@@ -1,6 +1,6 @@
 # gensin-tools
 
-`gensin-scan` is a Windows tool that reads your Genshin Impact **artifacts** and **achievements** from the game's screen using OCR, then exports them for tools like [Genshin Optimizer](https://frzyc.github.io/genshin-optimizer/), [Paimon.moe](https://paimon.moe) and [Seelie.me](https://seelie.me).
+`gensin-scan` is a Windows tool that reads your Genshin Impact **artifacts**, **weapons**, **characters** and **achievements** from the game's screen using OCR, then exports them for tools like [Genshin Optimizer](https://frzyc.github.io/genshin-optimizer/), [Paimon.moe](https://paimon.moe) and [Seelie.me](https://seelie.me).
 
 - **Pure Go standard library.** The scanner and its libraries have no third-party modules and no cgo. Win32 is called through `syscall`, and OCR runs through the Tesseract program.
 - **Strongly typed.** Slots, stats, rarities and IDs are distinct types that reject invalid values, including when saved reports are read back.
@@ -71,8 +71,12 @@ flowchart TD
     layout --> calibrate
     regions -- Yes --> choose{"What do you want to scan?"}
     choose -- Artifacts --> artifacts["artifacts"]
+    choose -- Weapons --> weapons["weapons"]
+    choose -- Characters --> characters["characters"]
     choose -- Achievements --> achievements["achievements"]
     artifacts --> good["export good"]
+    weapons --> good
+    characters --> good
     achievements --> total{"Total matches the game?"}
     total -- No --> resume["Run again with --resume"]
     resume --> total
@@ -118,7 +122,9 @@ Follow [Calibrating](#calibrating) until each region reads correctly.
 
 Then import `good.json` into Genshin Optimizer.
 
-**5. Scan achievements.** Open the Achievements screen, then:
+**5. Scan weapons and characters.** Open the Weapons tab of the inventory and run `.\gensin-scan.exe weapons`. Then press `C` to open the character screen and run `.\gensin-scan.exe characters`. Run `.\gensin-scan.exe export good` again afterwards, and it adds both to `good.json`. See [`weapons`](#weapons) and [`characters`](#characters) for what to check first.
+
+**6. Scan achievements.** Open the Achievements screen, then:
 
 ```powershell
 .\gensin-scan.exe achievements
@@ -373,7 +379,7 @@ Completion comes from two signals. "Completed" means every stage is done, while 
 
 Use `-i` and `-o` to change the paths. `--merge` takes the site's own export and keeps everything in it, **except achievements, which are replaced**.
 
-`export good` builds one GOOD file from every report it finds, and a section with no report is left out of the file. A report you name with a flag must exist. Weapons, characters and materials are validated against the game's rules (level against ascension, refinement 1 to 5, constellation 0 to 6, talents 1 to 15) and invalid ones are left out. **The scanners for weapons, characters and materials don't exist yet**, so those reports have to come from elsewhere for now. They use the same report format as the artifact scan, with `weapon`, `character` and `material` records.
+`export good` builds one GOOD file from every report it finds, and a section with no report is left out of the file. A report you name with a flag must exist. Weapons, characters and materials are validated against the game's rules (level against ascension, refinement 1 to 5, constellation 0 to 6, talents 1 to 15) and invalid ones are left out. Weapons and characters have scanners, but **materials don't**, so a `materials.json` has to come from elsewhere. Every report uses the same format as the artifact scan, with `weapon`, `character` or `material` records in place of `artifact`.
 
 Artifacts with scan issues are left out by default, because an otherwise valid artifact could be missing a substat. Artifacts that break the game's rules are never exported, even with `--include-issues`, because importers would silently fill bad fields with defaults.
 
@@ -437,6 +443,7 @@ Reports keep everything needed to diagnose a bad read:
 ```
 
 - `issues` lists problems that may make the entry wrong.
+- `notes` lists things worth knowing that don't make it wrong, such as a weapon that repeats the one before it.
 - `corrections` lists OCR errors that were repaired with confidence.
 - `raw` is exactly what OCR read.
 - `complete` is `false` if the scan stopped early. Exports warn about this.
@@ -581,19 +588,22 @@ Each package has one job, and each file within it covers one topic. Everything b
 ```text
 cmd/gensin-scan/        Entry point
 internal/cli/           One file per command, plus engine.go for shared OCR setup
-internal/game/          Domain types and rules: slot, stat, rarity, artifact, rolls
+internal/game/          Domain types and rules: slot, stat, rarity, artifact, weapon, character, rolls
 internal/scan/
     artifact_*.go       Parsing the artifact panel into a record
+    weapon_*.go         Parsing the weapon panel into a record
+    character_*.go      Walking the character screens and reading them
+    records_good.go     Weapon, character and material records
     substat.go          Parsing and repairing substat lines
     inventory_walker.go Starting a live inventory scan
     grid_run.go         Clicking through the item grid
     frames.go           Saved screenshots as a frame source
-    pipeline.go         The worker pool that analyzes frames
+    pipeline.go         The worker pool that analyzes frames, for any record type
     achievement_*.go    Reading results, live scans and offline scans
     reader.go           OCR on regions of one frame
     report.go           Saving and loading reports
     regions.go          Named regions for calibration
-internal/layout/        Screen coordinates, scaling and JSON overrides
+internal/layout/        Screen coordinates, scaling and JSON overrides, for every screen
 internal/imaging/
     preprocess.go       Preparing crops for OCR
     blobs.go            Finding stars by colour
@@ -605,8 +615,8 @@ internal/catalog/
     catalog.go          Reference data types
     match.go            Fuzzy lookups
     storage.go          Embedded snapshot and cached files
-    fetch*.go           Downloading from HoYoWiki and Paimon.moe
-internal/export/        GOOD, Paimon.moe and Seelie.me formats
+    fetch*.go           Downloading from HoYoWiki and Paimon.moe, including weapons and constellation boosts
+internal/export/        GOOD, Paimon.moe and Seelie.me formats, and reading Paimon.moe back
 control/                Module: game window, capture and input
     control_windows.go  The Game interface
     window_windows.go   Finding and focusing the game window
@@ -688,7 +698,8 @@ The images in `internal/scan/testdata` are **synthetic mock-ups** drawn by `tool
 - **The optional `totalRolls` GOOD field isn't filled in.**
 - **`notFound` achievements can't be confirmed individually.** They're treated as incomplete, so the printed total is the check that nothing was missed.
 - **Long result lists are only partly read.** Only rows visible without scrolling are checked. A full name usually narrows results enough, and anything not found gets `needsReview`.
-- **Only artifacts and achievements are scanned**, not weapons or characters. The artifact `location` field still identifies who has each piece equipped.
+- **Materials aren't scanned.** Artifacts, weapons, characters and achievements are. `export good` accepts a `materials.json` from elsewhere.
+- **Characters are read from the talents page of the current UI.** An older game version that lists talents differently would need the layout adjusted.
 - **Manekin, Manekina and characters newer than Genshin Optimizer's list** get keys it doesn't recognize, so it should import those artifacts as unequipped.
 - **Windows only**, and English only.
 - **Achievements are checked by searching one at a time**, which is slow but makes attribution much more reliable than reading a scrolling list.
