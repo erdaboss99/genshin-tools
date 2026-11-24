@@ -4,8 +4,8 @@
 
 - **Pure Go standard library.** The scanner and its libraries have no third-party modules and no cgo. Win32 is called through `syscall`, and OCR runs through the Tesseract program.
 - **Strongly typed.** Slots, stats, rarities and IDs are distinct types that reject invalid values, including when saved reports are read back.
-- **Works from screenshots too.** The same pipeline scans saved images, so you can review results or scan with no automation at all.
-- **Validates what it reads.** Substat values are checked against the values the game can actually roll, which also repairs common OCR mistakes like a lost decimal point.
+- **Works from screenshots too.** The same pipeline scans saved images of artifacts, weapons and achievements, so you can review results or scan with no automation at all. Characters need the live game, but `--save-frames` keeps a screenshot of every page that was read, so the results can be checked afterwards.
+- **Validates what it reads.** Substat values are checked against the values the game can actually roll, which also repairs common OCR mistakes like a lost decimal point. Levels, refinements, constellations and talents are checked against the game's rules too, and a field that can't be read twice the same way is reported instead of guessed.
 - **Stops safely.** Alt-Tab away from the game and scanning stops, with progress saved.
 
 > [!IMPORTANT]
@@ -32,17 +32,18 @@
 
 ## Project status
 
-| Area                                    | Status                          | How it was checked                                                                                                                                                                                                |
-| --------------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Artifact reading                        | Tested on the real game         | A full scan of a 748-item inventory on a 1920×1080 client exported 381 artifacts with no issues. A sample of frames was compared by eye with the game; the rest weren't checked individually                      |
-| Inventory traversal                     | Tested on the real game         | The first 384 items of that scan had no duplicates or ordering breaks. Items after that were below the rarity filter, so they weren't kept for checking. A simulated grid covers other window and inventory sizes |
-| Achievement scan                        | Tested on the real game         | A full live scan found 495 completed stages, matching the game's own total exactly                                                                                                                                |
-| **Character scan**                      | **Calibrated, not yet scanned** | Walking, parsing and the talent adjustment are covered by unit tests with a fake game. The boxes and tests were checked on real screenshots of all three pages, but no live character scan has been run |
-| Weapon scan                             | Tested on the real game         | A full scan of 52 weapons on a 1920×1080 client matched the game after the fixes above. Larger inventories haven't been scanned |
-| Exports                                 | Partly tested                   | Field names and set keys compared against Genshin Optimizer's schema and key list. Imports into the sites aren't covered by the test suite                                                                        |
-| Reference data                          | Tested                          | 297 of 299 artifact pieces match Genshin Optimizer's data; the other 2 have aliases                                                                                                                               |
-| Win32 capture and input                 | Tested on the real game         | Used by the live scans above, and `make test` runs the capture and input structure tests                                                                                                                          |
-| **Other resolutions and aspect ratios** | **Not tested on the real game** | Coordinates scale, but only 1920×1080 frames have been seen                                                                                                                                                       |
+| Area                                    | Status                          | How it was checked                                                                                                                                                                                                                                                                                                                                                   |
+| --------------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Artifact reading                        | Tested on the real game         | A full scan of a 748-item inventory on a 1920×1080 client exported 381 artifacts with no issues. A sample of frames was compared by eye with the game; the rest weren't checked individually                                                                                                                                                                         |
+| Inventory traversal                     | Tested on the real game         | The first 384 items of that scan had no duplicates or ordering breaks. Items after that were below the rarity filter, so they weren't kept for checking. A simulated grid covers other window and inventory sizes                                                                                                                                                    |
+| Weapon scan                             | Tested on the real game         | A full scan of 52 weapons on a 1920×1080 client, checked against screenshots of each one. It found 1-star weapons reported as having no refinement, and a weapon held by the Traveler left with no holder. Both are fixed. Larger inventories haven't been scanned                                                                                                   |
+| Character scan                          | Tested on the real game         | A full scan of 26 characters on a 1920×1080 client came out with no issues, after screenshots of several were compared with the report. That found a misread caused by a page still fading in, a teal background taken for a boosted talent, and talent names that wrap onto two lines. All are fixed. Alternate-sprint characters other than Mona haven't been seen |
+| Achievement scan                        | Tested on the real game         | A full live scan found 495 completed stages, matching the game's own total exactly                                                                                                                                                                                                                                                                                   |
+| Exports                                 | Partly tested                   | Field names and set keys compared against Genshin Optimizer's schema and key list. Imports into the sites aren't covered by the test suite                                                                                                                                                                                                                           |
+| Reference data                          | Tested                          | 297 of 299 artifact pieces match Genshin Optimizer's data; the other 2 have aliases. The weapon names and constellation boosts are fetched from HoYoWiki, and cover every released character except the Traveler and Aloy                                                                                                                                            |
+| Win32 capture and input                 | Tested on the real game         | Used by the live scans above, and `make test` runs the capture and input structure tests                                                                                                                                                                                                                                                                             |
+| **Materials**                           | **Not built**                   | `export good` accepts a `materials.json`, but nothing scans one yet                                                                                                                                                                                                                                                                                                  |
+| **Other resolutions and aspect ratios** | **Not tested on the real game** | Coordinates scale, but only 1920×1080 frames have been seen                                                                                                                                                                                                                                                                                                          |
 
 ## Requirements
 
@@ -111,7 +112,7 @@ cd $HOME
 .\gensin-scan.exe calibrate
 ```
 
-Follow [Calibrating](#calibrating) until each region reads correctly.
+Follow [Calibrating](#calibrating) until each region reads correctly. Weapons and characters have their own screens to check, with `calibrate --screen weapons` and `calibrate --screen characters`.
 
 **4. Scan artifacts.** With the Artifacts tab still open:
 
@@ -122,7 +123,15 @@ Follow [Calibrating](#calibrating) until each region reads correctly.
 
 Then import `good.json` into Genshin Optimizer.
 
-**5. Scan weapons and characters.** Open the Weapons tab of the inventory and run `.\gensin-scan.exe weapons`. Then press `C` to open the character screen and run `.\gensin-scan.exe characters`. Run `.\gensin-scan.exe export good` again afterwards, and it adds both to `good.json`. See [`weapons`](#weapons) and [`characters`](#characters) for what to check first.
+**5. Scan weapons and characters.** Open the Weapons tab of the inventory, then press `C` to open the character screen for the second scan:
+
+```powershell
+.\gensin-scan.exe weapons --traveler-name "YourName"
+.\gensin-scan.exe characters --traveler-name "YourName"
+.\gensin-scan.exe export good
+```
+
+`export good` reads every report it finds, so the second run adds weapons and characters to the same `good.json`. The Traveler goes by your own in-game name, so pass it, or their weapons and the Traveler themself are reported with issues. See [`weapons`](#weapons) and [`characters`](#characters) for what to check first.
 
 **6. Scan achievements.** Open the Achievements screen, then:
 
@@ -156,11 +165,20 @@ These use PowerShell.
 
 ```powershell
 .\gensin-scan.exe artifacts --traveler-name "YourName"
+.\gensin-scan.exe weapons --traveler-name "YourName"
+.\gensin-scan.exe characters --traveler-name "YourName"
 .\gensin-scan.exe export good
 
 .\gensin-scan.exe achievements --save-failures failures
 .\gensin-scan.exe export paimon
 .\gensin-scan.exe export seelie
+```
+
+**Keep screenshots of weapons and characters, to check the results against.** Weapon frames are about 1.7 MB each, and a character gets three:
+
+```powershell
+.\gensin-scan.exe weapons --min-rarity 1 --save-frames weapon-frames
+.\gensin-scan.exe characters --limit 10 --save-frames character-frames
 ```
 
 **Include 3-star artifacts, or only 5-star ones:**
@@ -183,11 +201,19 @@ These use PowerShell.
 .\gensin-scan.exe export seelie --merge my-seelie-export.json -o seelie-import.json
 ```
 
-**Scan saved screenshots**, which sends no input to the game:
+**Scan saved screenshots**, which sends no input to the game. This works for artifacts, weapons and achievements, but not characters:
 
 ```powershell
 .\gensin-scan.exe artifacts --from-dir .\frames -o artifacts-rescan.json
+.\gensin-scan.exe weapons --from-dir .\weapon-frames -o weapons-rescan.json
 .\gensin-scan.exe achievements --from-dir .\screenshots -o achievements-rescan.json
+```
+
+**Turn a Paimon.moe export into an `achievements.json`**, so you can export to Seelie.me without scanning:
+
+```powershell
+.\gensin-scan.exe extract paimon -i my-paimon-export.json
+.\gensin-scan.exe export seelie
 ```
 
 **Export artifacts that have scan issues too.** Check them first, because they may have wrong or missing values:
@@ -202,6 +228,8 @@ These use PowerShell.
 .\gensin-scan.exe capture -o shot.png
 .\gensin-scan.exe calibrate --image shot.png
 .\gensin-scan.exe calibrate --screen achievements --image shot.png -o achievements-boxes.png
+.\gensin-scan.exe calibrate --screen weapons --image weapon-shot.png -o weapon-boxes.png
+.\gensin-scan.exe calibrate --screen characters --image talents-shot.png -o talents-boxes.png
 .\gensin-scan.exe artifacts --limit 10 --layout layout.json
 ```
 
