@@ -4,11 +4,14 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 
 	"github.com/erdaboss99/gensin-tools/internal/catalog"
 	"github.com/erdaboss99/gensin-tools/internal/game"
+	"github.com/erdaboss99/gensin-tools/internal/imaging"
 	"github.com/erdaboss99/gensin-tools/internal/layout"
 )
 
@@ -353,5 +356,45 @@ func TestResolveBoosts(t *testing.T) {
 				t.Errorf("got %v, note %q, issue %q; want %v, note %v, issue %v", got, note, issue, tt.want, tt.note, tt.issue)
 			}
 		})
+	}
+}
+
+func TestCharacterScannerSavesPages(t *testing.T) {
+	g := newCharacterGame(1, 0)
+	dir := t.TempDir()
+	s := characterScanner(g,
+		"Pyro / Hu Tao", "Level 90 / 90", "Lv. 10", "Lv. 10", "Lv. 10",
+		"Hydro / Mona", "Level 20 / 20", "Lv. 1", "Lv. 1", "Lv. 1",
+		"Pyro / Hu Tao",
+	)
+	s.SaveFramesDir = filepath.Join(dir, "frames")
+	records, err := s.Scan(t.Context())
+	if err != nil || len(records) != 2 {
+		t.Fatalf("records = %d, err = %v", len(records), err)
+	}
+	entries, err := os.ReadDir(s.SaveFramesDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, e := range entries {
+		names = append(names, e.Name())
+	}
+	want := []string{
+		"000-HuTao-attributes.png", "000-HuTao-constellation.png", "000-HuTao-talents.png",
+		"001-Mona-attributes.png", "001-Mona-constellation.png", "001-Mona-talents.png",
+	}
+	if !slices.Equal(names, want) {
+		t.Errorf("saved %v, want %v", names, want)
+	}
+	if _, err := imaging.Load(filepath.Join(s.SaveFramesDir, want[0])); err != nil {
+		t.Errorf("a saved page can't be read back: %v", err)
+	}
+
+	// Without a directory nothing is written.
+	s.SaveFramesDir = ""
+	g2 := newCharacterGame(0)
+	if _, err := characterScanner(g2, "Pyro / Hu Tao", "Level 1 / 20", "Lv. 1", "Lv. 1", "Lv. 1", "Pyro / Hu Tao").Scan(t.Context()); err != nil {
+		t.Fatal(err)
 	}
 }

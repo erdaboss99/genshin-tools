@@ -1,11 +1,14 @@
 package scan
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"image"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -50,7 +53,15 @@ type CharacterScanner struct {
 	Pace         Pace
 	// Limit stops after this many characters. Zero means all of them.
 	Limit int
-	Log   *slog.Logger
+	// SaveFramesDir, when set, stores a screenshot of each page that was read, so the
+	// results can be checked against what the screen showed.
+	SaveFramesDir string
+	Log           *slog.Logger
+}
+
+// characterShots are the pages read for one character, kept for saving.
+type characterShots struct {
+	attributes, constellation, talents *image.RGBA
 }
 
 // Scan reads every character, starting from the one on screen and moving on until it
@@ -69,7 +80,7 @@ func (s CharacterScanner) Scan(ctx context.Context) ([]CharacterRecord, error) {
 		unreadable int
 	)
 	for position := 0; position < maxCharacters; position++ {
-		record, err := s.scanCharacter(ctx, win, first)
+		record, shots, err := s.scanCharacter(ctx, win, first)
 		if err != nil {
 			return s.finish(records), err
 		}
@@ -92,6 +103,9 @@ func (s CharacterScanner) Scan(ctx context.Context) ([]CharacterRecord, error) {
 		}
 		record.Index = len(records)
 		record.Source = fmt.Sprintf(liveSourceFormat, record.Index)
+		if err := s.saveShots(record, shots); err != nil {
+			return s.finish(records), err
+		}
 		records = append(records, record)
 		if s.Log != nil {
 			s.Log.Info("scanned character", "character", key, "issues", len(record.Issues))
@@ -113,34 +127,35 @@ func (s CharacterScanner) finish(records []CharacterRecord) []CharacterRecord {
 
 // scanCharacter reads the character on screen. When it turns out to be first, the
 // walk has come full circle and nothing else is read.
-func (s CharacterScanner) scanCharacter(ctx context.Context, win layout.Window, first game.CharacterKey) (CharacterRecord, error) {
+func (s CharacterScanner) scanCharacter(ctx context.Context, win layout.Window, first game.CharacterKey) (CharacterRecord, *characterShots, error) {
 	var record CharacterRecord
+	shots := &characterShots{}
 	if err := s.click(ctx, win, s.Layout.AttributesTab, tabDelay); err != nil {
-		return record, err
+		return record, shots, err
 	}
 
-	header, ok, err := s.readHeader(ctx, &record)
+	header, ok, err := s.readHeader(ctx, &record, shots)
 	if err != nil {
-		return record, err
+		return record, shots, err
 	}
 	if !ok {
 		record.issue("unreadable name %q", record.Raw.Header)
-		return record, nil
+		return record, shots, nil
 	}
 	c := &record.Character
 	c.Key, record.Element = header.Key, header.Element
 	if c.Key == first {
-		return record, nil
+		return record, shots, nil
 	}
 
 	if err := s.readLevel(ctx, &record); err != nil {
-		return record, err
+		return record, shots, err
 	}
-	if err := s.readConstellation(ctx, win, &record); err != nil {
-		return record, err
+	if err := s.readConstellation(ctx, win, &record, shots); err != nil {
+		return record, shots, err
 	}
-	if err := s.readTalents(ctx, win, &record, header.Name); err != nil {
-		return record, err
+	if err := s.readTalents(ctx, win, &record, header.Name, shots); err != nil {
+		return record, shots, err
 	}
 
 	if verr := c.Validate(); verr != nil {
@@ -150,15 +165,16 @@ func (s CharacterScanner) scanCharacter(ctx context.Context, win layout.Window, 
 			}
 		}
 	}
-	return record, nil
+	return record, shots, nil
 }
 
-func (s CharacterScanner) readHeader(ctx context.Context, record *CharacterRecord) (characterHeader, bool, error) {
+func (s CharacterScanner) readHeader(ctx context.Context, record *CharacterRecord, shots *characterShots) (characterHeader, bool, error) {
 	for attempt := range readAttempts {
 		r, err := s.reader(ctx)
 		if err != nil {
 			return characterHeader{}, false, err
 		}
+		shots.attributes = r.frame
 		text, err := r.read(s.Layout.Header, ocr.ModeBlock, "")
 		if err != nil {
 			return characterHeader{}, false, err
@@ -203,7 +219,7 @@ func (s CharacterScanner) readLevel(ctx context.Context, record *CharacterRecord
 
 // readConstellation opens each constellation in turn. One that isn't unlocked shows a
 // white "Activate" button, so the count is how many come before the first of those.
-func (s CharacterScanner) readConstellation(ctx context.Context, win layout.Window, record *CharacterRecord) error {
+func (s CharacterScanner) readConstellation(ctx context.Context, win layout.Window, record *CharacterRecord, shots *characterShots) error {
 	if err := s.click(ctx, win, s.Layout.ConstellationTab, tabDelay); err != nil {
 		return err
 	}
@@ -216,6 +232,7 @@ func (s CharacterScanner) readConstellation(ctx context.Context, win layout.Wind
 		if err != nil {
 			return err
 		}
+		shots.constellation = frame
 		if constellationLocked(imaging.MeanColor(frame, win.Rect(s.Layout.Activate))) {
 			break
 		}
@@ -226,7 +243,7 @@ func (s CharacterScanner) readConstellation(ctx context.Context, win layout.Wind
 
 // readTalents reads the three talent levels from the talents page, which lists them
 // all, and notes which are drawn in blue. Those are the ones constellations raised.
-func (s CharacterScanner) readTalents(ctx context.Context, win layout.Window, record *CharacterRecord, name string) error {
+func (s CharacterScanner) readTalents(ctx context.Context, win layout.Window, record *CharacterRecord, name string, shots *characterShots) error {
 	if err := s.click(ctx, win, s.Layout.TalentsTab, tabDelay); err != nil {
 		return err
 	}
@@ -239,7 +256,7 @@ func (s CharacterScanner) readTalents(ctx context.Context, win layout.Window, re
 			position++
 		}
 		rect := win.Rect(talentLevelBox(s.Layout, position))
-		level, boosted, raw, err := s.readTalentLevel(ctx, rect)
+		level, boosted, raw, err := s.readTalentLevel(ctx, rect, shots)
 		if err != nil {
 			return err
 		}
@@ -268,12 +285,13 @@ func (s CharacterScanner) readTalents(ctx context.Context, win layout.Window, re
 	return nil
 }
 
-func (s CharacterScanner) readTalentLevel(ctx context.Context, rect image.Rectangle) (level int, boosted bool, raw string, err error) {
+func (s CharacterScanner) readTalentLevel(ctx context.Context, rect image.Rectangle, shots *characterShots) (level int, boosted bool, raw string, err error) {
 	for attempt := range readAttempts {
 		r, err := s.reader(ctx)
 		if err != nil {
 			return 0, false, raw, err
 		}
+		shots.talents = r.frame
 		raw, err = r.readRect(rect, ocr.ModeBlock, levelAllowed)
 		if err != nil {
 			return 0, false, raw, err
@@ -288,6 +306,29 @@ func (s CharacterScanner) readTalentLevel(ctx context.Context, rect image.Rectan
 		}
 	}
 	return 0, false, raw, nil
+}
+
+// saveShots stores the pages read for a character, named by position and key.
+func (s CharacterScanner) saveShots(record CharacterRecord, shots *characterShots) error {
+	if s.SaveFramesDir == "" {
+		return nil
+	}
+	if err := os.MkdirAll(s.SaveFramesDir, 0o755); err != nil {
+		return err
+	}
+	name := cmp.Or(string(record.Character.Key), "unknown")
+	for page, frame := range map[string]*image.RGBA{
+		"attributes": shots.attributes, "constellation": shots.constellation, "talents": shots.talents,
+	} {
+		if frame == nil {
+			continue
+		}
+		path := filepath.Join(s.SaveFramesDir, fmt.Sprintf("%03d-%s-%s.png", record.Index, name, page))
+		if err := imaging.SavePNG(path, frame); err != nil {
+			return fmt.Errorf("save frame: %w", err)
+		}
+	}
+	return nil
 }
 
 func (s CharacterScanner) closeOverlay(ctx context.Context) error {
