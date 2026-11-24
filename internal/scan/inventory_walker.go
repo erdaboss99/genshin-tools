@@ -1,6 +1,7 @@
 package scan
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"image"
@@ -29,7 +30,9 @@ type InventoryWalker struct {
 	Limit int
 	// Count overrides the item count read from the screen. Zero reads it.
 	Count int
-	Log   *slog.Logger
+	// Tab names the inventory tab being walked, for error messages. Empty means Artifacts.
+	Tab string
+	Log *slog.Logger
 }
 
 // Walk implements FrameSource.
@@ -71,7 +74,8 @@ func (w InventoryWalker) readItemCount(ctx context.Context) (int, error) {
 	}
 	count, ok := parseItemCount(text)
 	if !ok {
-		return 0, fmt.Errorf("cannot read the item count from %q: open the Artifacts tab of your inventory, run calibrate, or pass --count", text)
+		tab := cmp.Or(w.Tab, "Artifacts")
+		return 0, fmt.Errorf("cannot read the item count from %q: open the %s tab of your inventory, run calibrate, or pass --count", text, tab)
 	}
 	return count, nil
 }
