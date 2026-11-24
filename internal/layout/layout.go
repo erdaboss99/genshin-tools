@@ -10,22 +10,24 @@ import (
 // Layout is the complete description of the screens that get scanned.
 type Layout struct {
 	Inventory    Inventory    `json:"inventory"`
+	Weapons      Weapons      `json:"weapons"`
 	Achievements Achievements `json:"achievements"`
 }
 
 // Default returns the built-in layout.
 func Default() Layout {
+	grid := Grid{
+		Columns:           8,
+		First:             Point{120, 131},
+		DeltaX:            98,
+		DeltaY:            117,
+		VerticalPadding:   160,
+		LastRowY:          -183,
+		ScrollTicksPerRow: 9.734,
+	}
 	return Layout{
 		Inventory: Inventory{
-			Grid: Grid{
-				Columns:           8,
-				First:             Point{120, 131},
-				DeltaX:            98,
-				DeltaY:            117,
-				VerticalPadding:   160,
-				LastRowY:          -183,
-				ScrollTicksPerRow: 9.734,
-			},
+			Grid:        grid,
 			ItemCount:   Box{-250, 20, -75, 45},
 			Panel:       Box{-408, 80, -81, -80},
 			Name:        Box{-393, 81, -97, 116},
@@ -41,6 +43,20 @@ func Default() Layout {
 			ElixirShift: 25,
 			StarMinArea: 85,
 			StarMaxArea: 180,
+		},
+		// The weapon boxes are converted from the fractions of the item card that
+		// Inventory Kamera uses, and the grid is assumed to match the artifact one.
+		// Neither has been checked against the real game, so run calibrate first.
+		Weapons: Weapons{
+			Grid:       grid,
+			ItemCount:  Box{-250, 20, -75, 45},
+			Panel:      Box{-408, 80, -81, -80},
+			Name:       Box{-393, 81, -97, 116},
+			Nameplate:  Box{-408, 80, -81, 118},
+			Level:      Box{-388, 285, -302, 305},
+			Refinement: Box{-389, 313, -364, 335},
+			Equipped:   Box{-272, -110, -82, -85},
+			LockIcon:   Box{-159, 283, -155, 287},
 		},
 		Achievements: Achievements{
 			ClearSearch:    Point{300, 90},
@@ -82,9 +98,10 @@ func Load(path string) (Layout, error) {
 // Validate rejects values that would make the scanners divide by zero or loop forever.
 func (l Layout) Validate() error {
 	var errs []error
-	g := l.Inventory.Grid
-	if g.Columns <= 0 || g.DeltaX <= 0 || g.DeltaY <= 0 || g.ScrollTicksPerRow <= 0 {
-		errs = append(errs, errors.New("inventory.grid: columns, deltaX, deltaY and scrollTicksPerRow must be positive"))
+	for name, g := range map[string]Grid{"inventory": l.Inventory.Grid, "weapons": l.Weapons.Grid} {
+		if g.Columns <= 0 || g.DeltaX <= 0 || g.DeltaY <= 0 || g.ScrollTicksPerRow <= 0 {
+			errs = append(errs, errors.New(name+".grid: columns, deltaX, deltaY and scrollTicksPerRow must be positive"))
+		}
 	}
 	if l.Inventory.StarMinArea > l.Inventory.StarMaxArea {
 		errs = append(errs, errors.New("inventory: starMinArea exceeds starMaxArea"))

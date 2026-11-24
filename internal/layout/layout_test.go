@@ -100,3 +100,17 @@ func TestLoad(t *testing.T) {
 		}
 	})
 }
+
+func TestDefaultWeaponLayoutIsValid(t *testing.T) {
+	l := Default()
+	if err := l.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if l.Weapons.Browse().Grid != l.Weapons.Grid || l.Weapons.Level == (Box{}) {
+		t.Errorf("weapon layout is incomplete: %+v", l.Weapons)
+	}
+	l.Weapons.Grid.Columns = 0
+	if l.Validate() == nil {
+		t.Error("a weapon grid without columns must be rejected")
+	}
+}
