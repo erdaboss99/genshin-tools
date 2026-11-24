@@ -327,11 +327,13 @@ Completion comes from two signals. "Completed" means every stage is done, while 
 
 | Command         | Reads               | Writes        | Extra flags                                         |
 | --------------- | ------------------- | ------------- | --------------------------------------------------- |
-| `export good`   | `artifacts.json`    | `good.json`   | `--include-issues` keeps artifacts with scan issues |
+| `export good`   | `artifacts.json`, plus `weapons.json`, `characters.json` and `materials.json` when present | `good.json`   | `--include-issues` keeps items with scan issues; `--weapons`, `--characters`, `--materials` choose the other reports |
 | `export paimon` | `achievements.json` | `paimon.json` | `--merge file`                                      |
 | `export seelie` | `achievements.json` | `seelie.json` | `--merge file`                                      |
 
 Use `-i` and `-o` to change the paths. `--merge` takes the site's own export and keeps everything in it, **except achievements, which are replaced**.
+
+`export good` builds one GOOD file from every report it finds, and a section with no report is left out of the file. A report you name with a flag must exist. Weapons, characters and materials are validated against the game's rules (level against ascension, refinement 1 to 5, constellation 0 to 6, talents 1 to 15) and invalid ones are left out. **The scanners for weapons, characters and materials don't exist yet**, so those reports have to come from elsewhere for now. They use the same report format as the artifact scan, with `weapon`, `character` and `material` records.
 
 Artifacts with scan issues are left out by default, because an otherwise valid artifact could be missing a substat. Artifacts that break the game's rules are never exported, even with `--include-issues`, because importers would silently fill bad fields with defaults.
 
