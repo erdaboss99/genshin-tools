@@ -142,8 +142,9 @@ func applyTartagliaBuff(records []CharacterRecord) bool {
 	return false
 }
 
-// cyanMinShare is how much of a talent's level text must be light blue for it to
-// count as boosted. Boosted levels are about 16% blue and others 0%.
+// cyanMinShare is how much of a talent's level box must be light blue for it to count
+// as boosted. Boosted levels measure 7% to 11%, and unboosted ones 1% or less, even on
+// a teal background.
 const cyanMinShare = 0.03
 
 // talentBoosted reports whether a talent's level is drawn in the light blue the game
@@ -155,7 +156,8 @@ func talentBoosted(frame *image.RGBA, rect image.Rectangle) bool {
 		for x := rect.Min.X; x < rect.Max.X; x++ {
 			p := frame.RGBAAt(x, y)
 			total++
-			if p.G > 170 && p.B > 170 && p.R < 140 && int(p.G)-int(p.R) > 60 {
+			// Bright, since a teal or blue background has the same hue but is darker.
+			if p.G > 200 && p.B > 210 && p.R < 150 {
 				cyan++
 			}
 		}

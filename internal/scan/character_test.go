@@ -525,3 +525,31 @@ func TestCharacterScannerFallsBackToTheOtherChannel(t *testing.T) {
 		t.Errorf("talents = %+v, issues = %v", got, records[0].Issues)
 	}
 }
+
+func TestTalentBoostedIgnoresTealBackgrounds(t *testing.T) {
+	rect := image.Rect(0, 0, 80, 30)
+	frame := image.NewRGBA(rect)
+	paint := func(r image.Rectangle, c color.RGBA) {
+		draw.Draw(frame, r, image.NewUniform(c), image.Point{}, draw.Src)
+	}
+
+	// A teal page, as Sucrose has, with white text on it, is not a boosted talent.
+	paint(rect, color.RGBA{30, 175, 165, 255})
+	paint(image.Rect(30, 10, 60, 20), color.RGBA{235, 235, 235, 255})
+	if talentBoosted(frame, rect) {
+		t.Error("a teal background was taken for a boosted level")
+	}
+
+	// Light blue text on a dark page is.
+	paint(rect, color.RGBA{60, 40, 110, 255})
+	paint(image.Rect(30, 10, 60, 20), color.RGBA{80, 230, 250, 255})
+	if !talentBoosted(frame, rect) {
+		t.Error("light blue text was not taken for a boosted level")
+	}
+
+	// Plain white text on a dark page is not.
+	paint(image.Rect(30, 10, 60, 20), color.RGBA{235, 235, 235, 255})
+	if talentBoosted(frame, rect) {
+		t.Error("white text was taken for a boosted level")
+	}
+}
