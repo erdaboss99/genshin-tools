@@ -37,6 +37,7 @@
 | Artifact reading                        | Tested on the real game         | A full scan of a 748-item inventory on a 1920×1080 client exported 381 artifacts with no issues. A sample of frames was compared by eye with the game; the rest weren't checked individually                      |
 | Inventory traversal                     | Tested on the real game         | The first 384 items of that scan had no duplicates or ordering breaks. Items after that were below the rarity filter, so they weren't kept for checking. A simulated grid covers other window and inventory sizes |
 | Achievement scan                        | Tested on the real game         | A full live scan found 495 completed stages, matching the game's own total exactly                                                                                                                                |
+| **Character scan**                      | **Not tested on the real game** | Walking, parsing and the talent adjustment are covered by unit tests with a fake game. The coordinates come from Inventory Kamera and nothing has been run |
 | **Weapon scan**                         | **Calibrated, not yet scanned** | Parsing is covered by unit tests with scripted OCR. On one 1920×1080 screenshot the boxes and click marks lined up, but no live weapon scan has been run |
 | Exports                                 | Partly tested                   | Field names and set keys compared against Genshin Optimizer's schema and key list. Imports into the sites aren't covered by the test suite                                                                        |
 | Reference data                          | Tested                          | 297 of 299 artifact pieces match Genshin Optimizer's data; the other 2 have aliases                                                                                                                               |
@@ -319,6 +320,28 @@ Reads weapons from the Weapons tab of the inventory. Open that tab first, then r
 Each weapon gets a key, level, ascension, refinement, lock state and equipped character. The level is read as "level/cap", and the cap gives the ascension. The rarity comes from the colour of the name banner and only decides which weapons stay in the report.
 
 **The weapon scan has only had a calibration check so far.** On one 1920×1080 screenshot every box read its text correctly and the click marks sat on the item cards, but no full live scan has been run. Run `calibrate --screen weapons` with the weapon panel showing, and fix any box that is off with `--layout`. Try `--limit 10` before a full scan.
+
+### `characters`
+
+Reads every character from the character screen. Press `C` to open it with any character selected, then run it. It clicks through each character's attributes, constellations and talents, and stops when it comes back to the first one. The report is `characters.json` by default.
+
+```powershell
+.\gensin-scan.exe characters --limit 3
+.\gensin-scan.exe calibrate --screen characters
+.\gensin-scan.exe export good
+```
+
+| Flag              | Default           | Purpose                                                       |
+| ----------------- | ----------------- | ------------------------------------------------------------- |
+| `-o`              | `characters.json` | Report file                                                   |
+| `--traveler-name` |                   | Your in-game name, which the game shows instead of "Traveler" |
+| `--limit`         | `0` (all)         | Stop after this many characters                               |
+| `--pace`          | `1`               | Multiplier for delays. Raise it if screens get missed         |
+| `--countdown`     | `5s`              | Delay before the scan starts                                  |
+
+The game shows talent levels with constellation bonuses added, and GOOD wants them without. Constellations 3 and 5 each raise one talent by 3 levels, usually the skill or the burst, but a few characters (such as Neuvillette and Lyney) have the normal attack instead. `update-data` reads which one from HoYoWiki. A character at constellation 3 or higher with no such data, which includes the Traveler, gets an `issues` entry, because its talent levels would be wrong. Tartaglia's passive adds a normal attack level to the first four characters, and the scan takes it off.
+
+**The character scan hasn't been checked against the real game.** Its coordinates come from Inventory Kamera and nothing has been run. Run `calibrate --screen characters` on each of the three pages (attributes, constellations, talents), look at where the boxes and click marks land, and fix any that are off with `--layout`. Try `--limit 3` before a full scan.
 
 ### `achievements`
 
