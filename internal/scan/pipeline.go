@@ -44,6 +44,20 @@ func ScanArtifacts(ctx context.Context, source FrameSource, parser ArtifactParse
 	})
 }
 
+// ScanWeapons analyzes weapon frames like ScanArtifacts analyzes artifact ones.
+func ScanWeapons(ctx context.Context, source FrameSource, parser WeaponParser, opts ScanOptions) ([]WeaponRecord, error) {
+	return scanFrames(ctx, source, opts, "weapons", frameHandler[WeaponRecord]{
+		parse: parser.Parse,
+		annotate: func(r *WeaponRecord, frame Frame, source string) {
+			r.Index, r.Source = frame.Index, source
+			if frame.Duplicate {
+				r.issue(duplicateFrameIssue)
+			}
+		},
+		index: func(r WeaponRecord) int { return r.Index },
+	})
+}
+
 const duplicateFrameIssue = "identical to the previous frame: the click may not have registered"
 
 // frameHandler is what scanFrames needs to know about one kind of record.
