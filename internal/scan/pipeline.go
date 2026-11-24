@@ -3,6 +3,7 @@ package scan
 import (
 	"context"
 	"fmt"
+	"image"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -31,6 +32,32 @@ type ScanOptions struct {
 // in frame order. Capture is much faster than OCR, so the queue is bounded to keep
 // memory flat. Records finished before a failure are still returned with the error.
 func ScanArtifacts(ctx context.Context, source FrameSource, parser ArtifactParser, opts ScanOptions) ([]ArtifactRecord, error) {
+	return scanFrames(ctx, source, opts, "artifacts", frameHandler[ArtifactRecord]{
+		parse: parser.Parse,
+		annotate: func(r *ArtifactRecord, frame Frame, source string) {
+			r.Index, r.Source = frame.Index, source
+			if frame.Duplicate {
+				r.issue(duplicateFrameIssue)
+			}
+		},
+		index: func(r ArtifactRecord) int { return r.Index },
+	})
+}
+
+const duplicateFrameIssue = "identical to the previous frame: the click may not have registered"
+
+// frameHandler is what scanFrames needs to know about one kind of record.
+type frameHandler[R any] struct {
+	// parse reads a record from a frame. skipped is true for frames that show
+	// something else, such as an upgrade material.
+	parse func(ctx context.Context, frame *image.RGBA) (record R, skipped bool, err error)
+	// annotate stamps the frame's position and source onto the record.
+	annotate func(record *R, frame Frame, source string)
+	// index returns the record's frame position, for ordering.
+	index func(R) int
+}
+
+func scanFrames[R any](ctx context.Context, source FrameSource, opts ScanOptions, noun string, h frameHandler[R]) ([]R, error) {
 	workers := max(opts.Workers, 1)
 	if opts.SaveFramesDir != "" {
 		if err := os.MkdirAll(opts.SaveFramesDir, 0o755); err != nil {
@@ -44,13 +71,13 @@ func ScanArtifacts(ctx context.Context, source FrameSource, parser ArtifactParse
 
 	var (
 		mu      sync.Mutex
-		records []ArtifactRecord
+		records []R
 		wg      sync.WaitGroup
 	)
 	for range workers {
 		wg.Go(func() {
 			for frame := range queue {
-				record, skipped, err := analyzeFrame(workCtx, frame, parser, opts.SaveFramesDir)
+				record, skipped, err := analyzeFrame(workCtx, frame, h, opts.SaveFramesDir)
 				if err != nil {
 					cancelWork(err)
 					continue
@@ -63,7 +90,7 @@ func ScanArtifacts(ctx context.Context, source FrameSource, parser ArtifactParse
 				done := len(records)
 				mu.Unlock()
 				if opts.Log != nil && done%progressInterval == 0 {
-					opts.Log.Info("progress", "artifacts", done)
+					opts.Log.Info("progress", noun, done)
 				}
 			}
 		})
@@ -80,7 +107,7 @@ func ScanArtifacts(ctx context.Context, source FrameSource, parser ArtifactParse
 	close(queue)
 	wg.Wait()
 
-	slices.SortFunc(records, func(a, b ArtifactRecord) int { return a.Index - b.Index })
+	slices.SortFunc(records, func(a, b R) int { return h.index(a) - h.index(b) })
 	// A worker's failure is the root cause, and the source's error is then only
 	// its echo. Otherwise the source's error, such as lost focus, is the story.
 	if cause := context.Cause(workCtx); cause != nil && ctx.Err() == nil {
@@ -89,22 +116,19 @@ func ScanArtifacts(ctx context.Context, source FrameSource, parser ArtifactParse
 	return records, sourceErr
 }
 
-func analyzeFrame(ctx context.Context, frame Frame, parser ArtifactParser, saveDir string) (ArtifactRecord, bool, error) {
+func analyzeFrame[R any](ctx context.Context, frame Frame, h frameHandler[R], saveDir string) (R, bool, error) {
+	var zero R
 	source := frame.Source
 	if saveDir != "" {
 		source = filepath.Join(saveDir, fmt.Sprintf(savedFrameFormat, frame.Index))
 		if err := imaging.SavePNG(source, frame.Image); err != nil {
-			return ArtifactRecord{}, false, fmt.Errorf("save frame: %w", err)
+			return zero, false, fmt.Errorf("save frame: %w", err)
 		}
 	}
-	record, skipped, err := parser.Parse(ctx, frame.Image)
+	record, skipped, err := h.parse(ctx, frame.Image)
 	if err != nil {
-		return ArtifactRecord{}, false, err
+		return zero, false, err
 	}
-	record.Index = frame.Index
-	record.Source = source
-	if frame.Duplicate {
-		record.issue("identical to the previous frame: the click may not have registered")
-	}
+	h.annotate(&record, frame, source)
 	return record, skipped, nil
 }
