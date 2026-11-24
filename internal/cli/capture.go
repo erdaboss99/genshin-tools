@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/erdaboss99/gensin-scan/internal/imaging"
+	"github.com/erdaboss99/gensin-tools/internal/imaging"
 )
 
 func (a *app) runCapture(ctx context.Context, args []string) error {

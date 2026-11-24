@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/erdaboss99/gensin-scan/internal/game"
+	"github.com/erdaboss99/gensin-tools/internal/game"
 )
 
 func TestNewGOOD(t *testing.T) {
@@ -28,7 +28,7 @@ func TestNewGOOD(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const want = `{"format":"GOOD","version":2,"source":"gensin-scan","artifacts":[{"setKey":"GladiatorsFinale","slotKey":"sands","level":20,"rarity":5,"mainStatKey":"atk_","location":"HuTao","lock":true,"substats":[{"key":"critRate_","value":3.9},{"key":"def","value":23},{"key":"enerRech_","value":6.5}],"unactivatedSubstats":[{"key":"hp","value":299}],"astralMark":true,"elixirCrafted":true}]}`
+	const want = `{"format":"GOOD","version":2,"source":"gensin-tools","artifacts":[{"setKey":"GladiatorsFinale","slotKey":"sands","level":20,"rarity":5,"mainStatKey":"atk_","location":"HuTao","lock":true,"substats":[{"key":"critRate_","value":3.9},{"key":"def","value":23},{"key":"enerRech_","value":6.5}],"unactivatedSubstats":[{"key":"hp","value":299}],"astralMark":true,"elixirCrafted":true}]}`
 	if string(raw) != want {
 		t.Errorf("got  %s\nwant %s", raw, want)
 	}

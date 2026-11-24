@@ -1,6 +1,6 @@
 package scan
 
-import "github.com/erdaboss99/gensin-scan/internal/game"
+import "github.com/erdaboss99/gensin-tools/internal/game"
 
 // AchievementRecord is the scan result for one achievement.
 type AchievementRecord struct {

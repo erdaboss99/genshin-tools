@@ -25,7 +25,7 @@ func DefaultDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(base, "gensin-scan"), nil
+	return filepath.Join(base, "gensin-tools"), nil
 }
 
 // Load reads each data file from dir when it exists there, falling back to the

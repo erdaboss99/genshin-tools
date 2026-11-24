@@ -1,4 +1,4 @@
-module github.com/erdaboss99/gensin-scan/tools/genfixtures
+module github.com/erdaboss99/gensin-tools/tools/genfixtures
 
 go 1.27.3
 

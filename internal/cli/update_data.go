@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/erdaboss99/gensin-scan/internal/catalog"
+	"github.com/erdaboss99/gensin-tools/internal/catalog"
 )
 
 func (a *app) runUpdateData(ctx context.Context, args []string) error {

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/erdaboss99/gensin-scan/internal/game"
+	"github.com/erdaboss99/gensin-tools/internal/game"
 )
 
 // Piece is one artifact piece.

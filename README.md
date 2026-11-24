@@ -1,4 +1,4 @@
-# gensin-scan
+# gensin-tools
 
 `gensin-scan` is a Windows tool that reads your Genshin Impact **artifacts** and **achievements** from the game's screen using OCR, then exports them for tools like [Genshin Optimizer](https://frzyc.github.io/genshin-optimizer/), [Paimon.moe](https://paimon.moe) and [Seelie.me](https://seelie.me).
 
@@ -457,7 +457,7 @@ Each box is a Go module in the [workspace](#workspace). `control` and `ocr` depe
 
 ```mermaid
 flowchart TD
-    subgraph root["Module: gensin-scan"]
+    subgraph root["Module: gensin-tools"]
         main["cmd/gensin-scan"] --> cli["internal/cli"]
         cli --> scan["internal/scan"]
         cli --> export["internal/export"]

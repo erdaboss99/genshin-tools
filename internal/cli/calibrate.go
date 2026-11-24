@@ -10,11 +10,11 @@ import (
 	"image/draw"
 	"strings"
 
-	"github.com/erdaboss99/gensin-scan/control"
-	"github.com/erdaboss99/gensin-scan/internal/imaging"
-	"github.com/erdaboss99/gensin-scan/internal/layout"
-	"github.com/erdaboss99/gensin-scan/internal/scan"
-	"github.com/erdaboss99/gensin-scan/ocr"
+	"github.com/erdaboss99/gensin-tools/control"
+	"github.com/erdaboss99/gensin-tools/internal/imaging"
+	"github.com/erdaboss99/gensin-tools/internal/layout"
+	"github.com/erdaboss99/gensin-tools/internal/scan"
+	"github.com/erdaboss99/gensin-tools/ocr"
 )
 
 // screen names the game screen being calibrated.

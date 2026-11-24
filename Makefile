@@ -1,4 +1,4 @@
-# gensin-scan build automation. Run "make" or "make help" for the target list.
+# gensin-tools build automation. Run "make" or "make help" for the target list.
 #
 # The scanner only runs on Windows. Everything here targets Windows, and works from
 # WSL: Go cross-compiles, and interop runs the resulting tests and tools on Windows.

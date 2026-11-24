@@ -8,7 +8,7 @@ import (
 	"io/fs"
 	"time"
 
-	"github.com/erdaboss99/gensin-scan/internal/scan"
+	"github.com/erdaboss99/gensin-tools/internal/scan"
 )
 
 // unknownCount marks a game total that could not be read.

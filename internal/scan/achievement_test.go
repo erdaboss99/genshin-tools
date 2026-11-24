@@ -11,11 +11,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/erdaboss99/gensin-scan/control"
-	"github.com/erdaboss99/gensin-scan/internal/catalog"
-	"github.com/erdaboss99/gensin-scan/internal/game"
-	"github.com/erdaboss99/gensin-scan/internal/imaging"
-	"github.com/erdaboss99/gensin-scan/internal/layout"
+	"github.com/erdaboss99/gensin-tools/control"
+	"github.com/erdaboss99/gensin-tools/internal/catalog"
+	"github.com/erdaboss99/gensin-tools/internal/game"
+	"github.com/erdaboss99/gensin-tools/internal/imaging"
+	"github.com/erdaboss99/gensin-tools/internal/layout"
 )
 
 // achievementFrame draws one medal per row, with the given number of stars, at the

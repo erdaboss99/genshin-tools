@@ -3,12 +3,12 @@ package export
 import (
 	"fmt"
 
-	"github.com/erdaboss99/gensin-scan/internal/game"
+	"github.com/erdaboss99/gensin-tools/internal/game"
 )
 
 const (
 	goodFormat = "GOOD"
-	goodSource = "gensin-scan"
+	goodSource = "gensin-tools"
 	// goodVersion is the GOOD format version emitted. Version 2 has the widest tool
 	// support, and tools ignore fields they don't recognize.
 	goodVersion = 2

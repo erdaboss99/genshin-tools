@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	userAgent   = "gensin-scan (+https://github.com/erdaboss99/gensin-scan)"
+	userAgent   = "gensin-tools (+https://github.com/erdaboss99/gensin-tools)"
 	httpTimeout = 45 * time.Second
 )
 

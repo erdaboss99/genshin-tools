@@ -8,8 +8,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/erdaboss99/gensin-scan/control"
-	"github.com/erdaboss99/gensin-scan/internal/layout"
+	"github.com/erdaboss99/gensin-tools/control"
+	"github.com/erdaboss99/gensin-tools/internal/layout"
 )
 
 func TestParseItemCount(t *testing.T) {

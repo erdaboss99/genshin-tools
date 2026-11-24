@@ -6,9 +6,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/erdaboss99/gensin-scan/internal/catalog"
-	"github.com/erdaboss99/gensin-scan/internal/game"
-	"github.com/erdaboss99/gensin-scan/internal/layout"
+	"github.com/erdaboss99/gensin-tools/internal/catalog"
+	"github.com/erdaboss99/gensin-tools/internal/game"
+	"github.com/erdaboss99/gensin-tools/internal/layout"
 )
 
 func TestApplySubstatLine(t *testing.T) {

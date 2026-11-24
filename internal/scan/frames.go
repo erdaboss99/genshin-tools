@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/erdaboss99/gensin-scan/internal/imaging"
+	"github.com/erdaboss99/gensin-tools/internal/imaging"
 )
 
 // Frame is one screenshot awaiting analysis.

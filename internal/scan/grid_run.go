@@ -8,8 +8,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/erdaboss99/gensin-scan/internal/imaging"
-	"github.com/erdaboss99/gensin-scan/internal/layout"
+	"github.com/erdaboss99/gensin-tools/internal/imaging"
+	"github.com/erdaboss99/gensin-tools/internal/layout"
 )
 
 // gridRun is the state of one traversal.

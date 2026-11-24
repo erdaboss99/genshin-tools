@@ -5,9 +5,9 @@ import (
 	"image"
 	"strings"
 
-	"github.com/erdaboss99/gensin-scan/internal/imaging"
-	"github.com/erdaboss99/gensin-scan/internal/layout"
-	"github.com/erdaboss99/gensin-scan/ocr"
+	"github.com/erdaboss99/gensin-tools/internal/imaging"
+	"github.com/erdaboss99/gensin-tools/internal/layout"
+	"github.com/erdaboss99/gensin-tools/ocr"
 )
 
 // reader performs OCR on regions of one frame.

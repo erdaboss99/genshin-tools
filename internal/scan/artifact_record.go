@@ -3,7 +3,7 @@ package scan
 import (
 	"fmt"
 
-	"github.com/erdaboss99/gensin-scan/internal/game"
+	"github.com/erdaboss99/gensin-tools/internal/game"
 )
 
 // RawArtifactText preserves what OCR read, for diagnosing bad results.

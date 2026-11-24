@@ -3,7 +3,7 @@ package scan
 import (
 	"strings"
 
-	"github.com/erdaboss99/gensin-scan/internal/fuzzy"
+	"github.com/erdaboss99/gensin-tools/internal/fuzzy"
 )
 
 // firstTextLine returns the first line holding any letters or digits.

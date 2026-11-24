@@ -3,7 +3,7 @@ package catalog
 import (
 	"strings"
 
-	"github.com/erdaboss99/gensin-scan/internal/fuzzy"
+	"github.com/erdaboss99/gensin-tools/internal/fuzzy"
 )
 
 // Minimum match scores. Long names tolerate a few misread characters, while

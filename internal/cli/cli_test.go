@@ -12,10 +12,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/erdaboss99/gensin-scan/internal/export"
-	"github.com/erdaboss99/gensin-scan/internal/game"
-	"github.com/erdaboss99/gensin-scan/internal/layout"
-	"github.com/erdaboss99/gensin-scan/internal/scan"
+	"github.com/erdaboss99/gensin-tools/internal/export"
+	"github.com/erdaboss99/gensin-tools/internal/game"
+	"github.com/erdaboss99/gensin-tools/internal/layout"
+	"github.com/erdaboss99/gensin-tools/internal/scan"
 )
 
 func run(t *testing.T, args ...string) (code int, stdout, stderr string) {
