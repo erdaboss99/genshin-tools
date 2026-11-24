@@ -1,0 +1,9 @@
+# Store text files with LF line endings in the repository and check them out with
+# LF everywhere, including Windows, so gofmt never sees CRLF.
+* text=auto eol=lf
+
+# Binary files: never convert line endings or diff as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.exe binary
