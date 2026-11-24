@@ -33,14 +33,30 @@ func (a *app) runExport(args []string) error {
 // goodExportOptions holds the export good command's flags.
 type goodExportOptions struct {
 	in            string
+	weapons       string
+	characters    string
+	materials     string
 	out           string
 	includeIssues bool
 }
 
 func (o *goodExportOptions) register(flags *flag.FlagSet) {
 	flags.StringVar(&o.in, "i", "artifacts.json", "artifact report to read")
+	flags.StringVar(&o.weapons, "weapons", "weapons.json", "weapon report to read")
+	flags.StringVar(&o.characters, "characters", "characters.json", "character report to read")
+	flags.StringVar(&o.materials, "materials", "materials.json", "material report to read")
 	flags.StringVar(&o.out, "o", "good.json", "GOOD file to write")
-	flags.BoolVar(&o.includeIssues, "include-issues", false, "keep artifacts with scan issues, as long as they pass the game's rules; these may have wrong or missing values")
+	flags.BoolVar(&o.includeIssues, "include-issues", false, "keep items with scan issues, as long as they pass the game's rules; these may have wrong or missing values")
+}
+
+// readOptionalReport reads a report that may be absent. A report named on the command
+// line must exist, while a default path that isn't there is skipped.
+func readOptionalReport[T any](path string, explicit bool) (report scan.Report[T], found bool, err error) {
+	report, err = scan.ReadReport[T](path)
+	if errors.Is(err, fs.ErrNotExist) && !explicit {
+		return report, false, nil
+	}
+	return report, err == nil, err
 }
 
 func (a *app) exportGOOD(args []string) error {
@@ -50,29 +66,87 @@ func (a *app) exportGOOD(args []string) error {
 	if err := parseFlags(flags, args); err != nil {
 		return err
 	}
+	explicit := make(map[string]bool)
+	flags.Visit(func(f *flag.Flag) { explicit[f.Name] = true })
 
-	report, err := scan.ReadReport[scan.ArtifactRecord](opts.in)
+	var input export.GOODInput
+	var incomplete []string
+	skipped := 0
+	keep := func(issues []string) bool {
+		if !opts.includeIssues && len(issues) > 0 {
+			skipped++
+			return false
+		}
+		return true
+	}
+
+	artifacts, ok, err := readOptionalReport[scan.ArtifactRecord](opts.in, explicit["i"])
 	if err != nil {
 		return err
 	}
-	artifacts := make([]game.Artifact, 0, len(report.Items))
-	skipped := 0
-	for _, record := range report.Items {
-		if !opts.includeIssues && len(record.Issues) > 0 {
-			skipped++
-			continue
+	if ok {
+		for _, r := range artifacts.Items {
+			if keep(r.Issues) {
+				input.Artifacts = append(input.Artifacts, r.Artifact)
+			}
 		}
-		artifacts = append(artifacts, record.Artifact)
+		if !artifacts.Complete {
+			incomplete = append(incomplete, opts.in)
+		}
+	}
+	weapons, hasWeapons, err := readOptionalReport[scan.WeaponRecord](opts.weapons, explicit["weapons"])
+	if err != nil {
+		return err
+	}
+	if hasWeapons {
+		for _, r := range weapons.Items {
+			if keep(r.Issues) {
+				input.Weapons = append(input.Weapons, r.Weapon)
+			}
+		}
+		if !weapons.Complete {
+			incomplete = append(incomplete, opts.weapons)
+		}
+	}
+	characters, hasCharacters, err := readOptionalReport[scan.CharacterRecord](opts.characters, explicit["characters"])
+	if err != nil {
+		return err
+	}
+	if hasCharacters {
+		for _, r := range characters.Items {
+			if keep(r.Issues) {
+				input.Characters = append(input.Characters, r.Character)
+			}
+		}
+		if !characters.Complete {
+			incomplete = append(incomplete, opts.characters)
+		}
+	}
+	materials, hasMaterials, err := readOptionalReport[scan.MaterialRecord](opts.materials, explicit["materials"])
+	if err != nil {
+		return err
+	}
+	if hasMaterials {
+		input.Materials = make(map[string]int, len(materials.Items))
+		for _, r := range materials.Items {
+			input.Materials[r.Key] += r.Count
+		}
+		if !materials.Complete {
+			incomplete = append(incomplete, opts.materials)
+		}
+	}
+	if !ok && !hasWeapons && !hasCharacters && !hasMaterials {
+		return fmt.Errorf("nothing to export: none of %s, %s, %s or %s exists", opts.in, opts.weapons, opts.characters, opts.materials)
 	}
 
-	doc, rejected := export.NewGOOD(artifacts)
+	doc, rejected := export.BuildGOOD(input)
 	if err := scan.WriteJSON(opts.out, doc); err != nil {
 		return err
 	}
-	fmt.Fprintf(a.stdout, "Wrote %d artifacts to %s (%d invalid and %d with issues were left out).\n",
-		len(doc.Artifacts), opts.out, len(rejected), skipped)
-	if !report.Complete {
-		fmt.Fprintln(a.stdout, "Warning: this report comes from a scan that stopped early.")
+	fmt.Fprintf(a.stdout, "Wrote %d artifacts, %d weapons, %d characters and %d materials to %s (%d invalid and %d with issues were left out).\n",
+		len(doc.Artifacts), len(doc.Weapons), len(doc.Characters), len(doc.Materials), opts.out, len(rejected), skipped)
+	for _, path := range incomplete {
+		fmt.Fprintf(a.stdout, "Warning: %s comes from a scan that stopped early.\n", path)
 	}
 	return nil
 }
