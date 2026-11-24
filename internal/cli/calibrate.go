@@ -23,17 +23,18 @@ type screen string
 const (
 	screenInventory    screen = "inventory"
 	screenWeapons      screen = "weapons"
+	screenCharacters   screen = "characters"
 	screenAchievements screen = "achievements"
 )
 
 // Set implements flag.Value.
 func (s *screen) Set(value string) error {
 	switch screen(value) {
-	case screenInventory, screenWeapons, screenAchievements:
+	case screenInventory, screenWeapons, screenCharacters, screenAchievements:
 		*s = screen(value)
 		return nil
 	}
-	return fmt.Errorf("must be %q, %q or %q", screenInventory, screenWeapons, screenAchievements)
+	return fmt.Errorf("must be %q, %q, %q or %q", screenInventory, screenWeapons, screenCharacters, screenAchievements)
 }
 
 // String implements flag.Value.
@@ -53,7 +54,7 @@ type calibrateOptions struct {
 func (o *calibrateOptions) register(flags *flag.FlagSet) {
 	o.engine.register(flags)
 	o.which = screenInventory
-	flags.Var(&o.which, "screen", `screen to check: "inventory" (artifacts), "weapons" or "achievements"`)
+	flags.Var(&o.which, "screen", `screen to check: "inventory" (artifacts), "weapons", "characters" or "achievements"`)
 	flags.StringVar(&o.image, "image", "", "use this screenshot instead of the live game")
 	flags.StringVar(&o.out, "o", "calibration.png", "image to write with the regions drawn on it")
 	flags.BoolVar(&o.printLayout, "print-layout", false, "print the active layout as JSON, as a starting point for --layout, and exit")
@@ -108,6 +109,8 @@ func (a *app) runCalibrate(ctx context.Context, args []string) error {
 	switch opts.which {
 	case screenWeapons:
 		regions = scan.WeaponRegions(lay.Weapons, win, frame)
+	case screenCharacters:
+		regions = scan.CharacterRegions(lay.Characters, win)
 	case screenAchievements:
 		regions = scan.AchievementRegions(lay.Achievements, win, frame)
 		if len(regions) == 0 {
@@ -127,6 +130,8 @@ func (a *app) runCalibrate(ctx context.Context, args []string) error {
 		drawGrid(canvas, win, lay.Inventory.Grid)
 	case screenWeapons:
 		drawGrid(canvas, win, lay.Weapons.Grid)
+	case screenCharacters:
+		drawTargets(canvas, win, scan.CharacterTargets(lay.Characters, win))
 	}
 
 	if err := imaging.SavePNG(opts.out, canvas); err != nil {
@@ -173,6 +178,14 @@ func drawGrid(canvas *image.RGBA, win layout.Window, grid layout.Grid) {
 			mark := image.Rect(x-size, y-size, x+size, y+size)
 			draw.Draw(canvas, mark, image.NewUniform(clickMarkColor), image.Point{}, draw.Src)
 		}
+	}
+}
+
+// drawTargets marks every point the scanner will click.
+func drawTargets(canvas *image.RGBA, win layout.Window, points []image.Point) {
+	size := max(win.Len(4), 2)
+	for _, p := range points {
+		draw.Draw(canvas, image.Rect(p.X-size, p.Y-size, p.X+size, p.Y+size), image.NewUniform(clickMarkColor), image.Point{}, draw.Src)
 	}
 }
 

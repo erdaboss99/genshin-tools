@@ -48,6 +48,32 @@ func WeaponRegions(l layout.Weapons, win layout.Window, _ *image.RGBA) []NamedRe
 	}
 }
 
+// CharacterRegions lists the character screen regions that are read. They sit on
+// different pages, so no single screenshot shows all of them in use.
+func CharacterRegions(l layout.Characters, win layout.Window) []NamedRect {
+	return []NamedRect{
+		{"header", win.Rect(l.Header)},
+		{"level", win.Rect(l.Level)},
+		{"activate", win.Rect(l.Activate)},
+		{"talentLevel", win.Rect(l.TalentLevel)},
+	}
+}
+
+// CharacterTargets lists where the character scan clicks.
+func CharacterTargets(l layout.Characters, win layout.Window) []image.Point {
+	points := []image.Point{
+		win.Point(l.NextCharacter), win.Point(l.AttributesTab), win.Point(l.ConstellationTab), win.Point(l.TalentsTab),
+	}
+	for i := range 6 {
+		points = append(points, win.Point(l.Constellations.At(i)))
+	}
+	// Four talent positions, as characters with an alternate sprint use the fourth.
+	for i := range 4 {
+		points = append(points, win.Point(l.Talents.At(i)))
+	}
+	return points
+}
+
 // AchievementRegions lists the regions of every result row found in this frame.
 func AchievementRegions(l layout.Achievements, win layout.Window, frame *image.RGBA) []NamedRect {
 	var regions []NamedRect
