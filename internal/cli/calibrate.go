@@ -22,17 +22,18 @@ type screen string
 
 const (
 	screenInventory    screen = "inventory"
+	screenWeapons      screen = "weapons"
 	screenAchievements screen = "achievements"
 )
 
 // Set implements flag.Value.
 func (s *screen) Set(value string) error {
 	switch screen(value) {
-	case screenInventory, screenAchievements:
+	case screenInventory, screenWeapons, screenAchievements:
 		*s = screen(value)
 		return nil
 	}
-	return fmt.Errorf("must be %q or %q", screenInventory, screenAchievements)
+	return fmt.Errorf("must be %q, %q or %q", screenInventory, screenWeapons, screenAchievements)
 }
 
 // String implements flag.Value.
@@ -52,7 +53,7 @@ type calibrateOptions struct {
 func (o *calibrateOptions) register(flags *flag.FlagSet) {
 	o.engine.register(flags)
 	o.which = screenInventory
-	flags.Var(&o.which, "screen", `screen to check: "inventory" or "achievements"`)
+	flags.Var(&o.which, "screen", `screen to check: "inventory" (artifacts), "weapons" or "achievements"`)
 	flags.StringVar(&o.image, "image", "", "use this screenshot instead of the live game")
 	flags.StringVar(&o.out, "o", "calibration.png", "image to write with the regions drawn on it")
 	flags.BoolVar(&o.printLayout, "print-layout", false, "print the active layout as JSON, as a starting point for --layout, and exit")
@@ -104,12 +105,15 @@ func (a *app) runCalibrate(ctx context.Context, args []string) error {
 	}
 
 	var regions []scan.NamedRect
-	if opts.which == screenAchievements {
+	switch opts.which {
+	case screenWeapons:
+		regions = scan.WeaponRegions(lay.Weapons, win, frame)
+	case screenAchievements:
 		regions = scan.AchievementRegions(lay.Achievements, win, frame)
 		if len(regions) == 0 {
 			fmt.Fprintln(a.stdout, "No result rows found. If a search result is showing, check achievements.medals in the layout.")
 		}
-	} else {
+	default:
 		regions = scan.InventoryRegions(lay.Inventory, win, frame)
 	}
 
@@ -118,8 +122,11 @@ func (a *app) runCalibrate(ctx context.Context, args []string) error {
 	if err := a.drawRegions(ctx, t, frame, canvas, win, regions); err != nil {
 		return err
 	}
-	if opts.which == screenInventory {
+	switch opts.which {
+	case screenInventory:
 		drawGrid(canvas, win, lay.Inventory.Grid)
+	case screenWeapons:
+		drawGrid(canvas, win, lay.Weapons.Grid)
 	}
 
 	if err := imaging.SavePNG(opts.out, canvas); err != nil {

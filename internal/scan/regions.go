@@ -35,6 +35,19 @@ func InventoryRegions(l layout.Inventory, win layout.Window, frame *image.RGBA) 
 	}
 }
 
+// WeaponRegions lists the weapon regions for this frame.
+func WeaponRegions(l layout.Weapons, win layout.Window, _ *image.RGBA) []NamedRect {
+	return []NamedRect{
+		{"itemCount", win.Rect(l.ItemCount)},
+		{"name", win.Rect(l.Name)},
+		{"nameplate", win.Rect(l.Nameplate)},
+		{"level", win.Rect(l.Level)},
+		{"refinement", win.Rect(l.Refinement)},
+		{"equipped", win.Rect(l.Equipped)},
+		{"lockIcon", win.Rect(l.LockIcon)},
+	}
+}
+
 // AchievementRegions lists the regions of every result row found in this frame.
 func AchievementRegions(l layout.Achievements, win layout.Window, frame *image.RGBA) []NamedRect {
 	var regions []NamedRect
