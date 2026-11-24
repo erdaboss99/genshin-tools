@@ -464,3 +464,64 @@ func TestCharacterScannerHintsAtTravelerName(t *testing.T) {
 		t.Errorf("records = %+v, want a hint about --traveler-name", records)
 	}
 }
+
+func TestReadStable(t *testing.T) {
+	run := func(reads ...int) (value int, agreed, valid bool) {
+		i := 0
+		value, agreed, valid, err := readStable(t.Context(), 0, func() (int, bool, error) {
+			defer func() { i++ }()
+			if i >= len(reads) {
+				return 0, false, nil
+			}
+			// A zero stands for a read that couldn't be parsed.
+			return reads[i], reads[i] != 0, nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return value, agreed, valid
+	}
+	tests := []struct {
+		name          string
+		reads         []int
+		value         int
+		agreed, valid bool
+	}{
+		{"two in a row", []int{1, 1}, 1, true, true},
+		{"a misread first", []int{11, 1, 1}, 1, true, true},
+		{"unparseable reads in between", []int{1, 0, 0, 1}, 1, true, true},
+		{"a misread then a failure then the real value twice", []int{11, 0, 1, 0, 1}, 1, true, true},
+		{"never repeats", []int{1, 2, 3, 4, 5, 6, 7, 8}, 8, false, true},
+		{"nothing readable", []int{0, 0, 0}, 0, false, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			value, agreed, valid := run(tt.reads...)
+			if value != tt.value || agreed != tt.agreed || valid != tt.valid {
+				t.Errorf("got %d, agreed %v, valid %v; want %d, %v, %v", value, agreed, valid, tt.value, tt.agreed, tt.valid)
+			}
+		})
+	}
+}
+
+func TestCharacterScannerFallsBackToTheOtherChannel(t *testing.T) {
+	// The first channel can't read the normal attack, so the second is tried in the same
+	// attempt. Two valid reads in all are needed, and the third reply is the next
+	// attempt's first.
+	g := newCharacterGame(0)
+	s := CharacterScanner{Game: g, Layout: g.layout, Catalog: characterCatalog(), OCR: &scriptedOCR{replies: []string{
+		"Pyro / Hu Tao", "Pyro / Hu Tao",
+		"Level 90 / 90", "Level 90 / 90",
+		"??", "Lv. 3", "Lv. 3", // normal attack: unreadable, then two good reads
+		"Lv. 4", "Lv. 4",
+		"Lv. 5", "Lv. 5",
+		"Pyro / Hu Tao", "Pyro / Hu Tao",
+	}}}
+	records, err := s.Scan(t.Context())
+	if err != nil || len(records) != 1 {
+		t.Fatalf("records = %d, err = %v", len(records), err)
+	}
+	if got := records[0].Character.Talent; got != (game.Talents{Auto: 3, Skill: 4, Burst: 5}) || len(records[0].Issues) != 0 {
+		t.Errorf("talents = %+v, issues = %v", got, records[0].Issues)
+	}
+}

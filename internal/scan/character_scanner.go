@@ -173,27 +173,23 @@ func (s CharacterScanner) scanCharacter(ctx context.Context, win layout.Window, 
 	return record, shots, nil
 }
 
-// readStable calls read until two calls in a row give the same valid value. A screen
-// that is still fading in can give a wrong but plausible reading once, such as an
-// extra digit, and it rarely gives the same wrong one twice. When nothing repeats it
-// returns the last valid value with agreed false, and valid is false if there never
-// was one.
+// readStable calls read until the same valid value has come up twice. A screen that
+// is still fading in can give a wrong but plausible reading once, such as an extra
+// digit, and it rarely gives the same wrong one twice. Reads that can't be parsed in
+// between don't matter. When no value repeats it returns the last valid one with
+// agreed false, and valid is false if there never was one.
 func readStable[T comparable](ctx context.Context, pace Pace, read func() (T, bool, error)) (value T, agreed, valid bool, err error) {
-	var previous T
-	havePrevious := false
+	seen := make(map[T]int)
 	for attempt := range readAttempts {
 		v, ok, err := read()
 		if err != nil {
 			return value, false, valid, err
 		}
 		if ok {
-			if havePrevious && v == previous {
+			if seen[v]++; seen[v] >= 2 {
 				return v, true, true, nil
 			}
-			previous, havePrevious = v, true
 			value, valid = v, true
-		} else {
-			havePrevious = false
 		}
 		if attempt < readAttempts-1 {
 			if err := pace.sleep(ctx, rereadDelay); err != nil {
@@ -347,13 +343,25 @@ func (s CharacterScanner) readTalentLevel(ctx context.Context, rect image.Rectan
 			return talentReading{}, false, err
 		}
 		shots.talents = r.frame
-		text, err := r.readRect(rect, ocr.ModeBlock, levelAllowed)
-		if err != nil {
-			return talentReading{}, false, err
+		// Blue text is hard to read on its darkest channel, where it has little
+		// contrast, and reads cleanly on its green one. Everything else reads best
+		// the other way round. Each is the fallback for the other.
+		boosted := talentBoosted(r.frame, rect)
+		channels := []imaging.Channel{imaging.Darkest, imaging.Green}
+		if boosted {
+			channels = []imaging.Channel{imaging.Green, imaging.Darkest}
 		}
-		raw = text
-		level, ok := parseTalentLevel(text)
-		return talentReading{level, talentBoosted(r.frame, rect)}, ok, nil
+		for _, channel := range channels {
+			text, err := r.readRectChannel(rect, ocr.ModeBlock, levelAllowed, imaging.OCRScale(r.win.Width), channel)
+			if err != nil {
+				return talentReading{}, false, err
+			}
+			raw = text
+			if level, ok := parseTalentLevel(text); ok {
+				return talentReading{level, boosted}, true, nil
+			}
+		}
+		return talentReading{}, false, nil
 	})
 	return reading, raw, agreed, valid, err
 }
