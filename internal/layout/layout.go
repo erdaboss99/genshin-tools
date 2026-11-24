@@ -11,6 +11,7 @@ import (
 type Layout struct {
 	Inventory    Inventory    `json:"inventory"`
 	Weapons      Weapons      `json:"weapons"`
+	Characters   Characters   `json:"characters"`
 	Achievements Achievements `json:"achievements"`
 }
 
@@ -57,6 +58,20 @@ func Default() Layout {
 			Refinement: Box{-385, 317, -369, 331},
 			Equipped:   Box{-272, -110, -82, -85},
 			LockIcon:   Box{-121, 284, -117, 288},
+		},
+		// The character coordinates come from Inventory Kamera and haven't been
+		// checked against the real game, so run calibrate first.
+		Characters: Characters{
+			Header:           Box{85, 10, 305, 55},
+			Level:            Box{960, 135, 1125, 163},
+			NextCharacter:    Point{1230, 350},
+			AttributesTab:    Point{170, 105},
+			ConstellationTab: Point{170, 245},
+			TalentsTab:       Point{135, 290},
+			Constellations:   Column{X: 1130, FirstY: 180, StepY: 75},
+			Activate:         Box{70, 665, 100, 695},
+			Talents:          Column{X: 1130, FirstY: 110, StepY: 60},
+			TalentLevel:      Box{0, 92, 373, 143},
 		},
 		Achievements: Achievements{
 			ClearSearch:    Point{300, 90},
@@ -105,6 +120,10 @@ func (l Layout) Validate() error {
 	}
 	if l.Inventory.StarMinArea > l.Inventory.StarMaxArea {
 		errs = append(errs, errors.New("inventory: starMinArea exceeds starMaxArea"))
+	}
+	c := l.Characters
+	if c.Constellations.StepY <= 0 || c.Talents.StepY <= 0 {
+		errs = append(errs, errors.New("characters: constellations and talents need a positive stepY"))
 	}
 	a := l.Achievements
 	if a.MaxRows <= 0 || a.MedalMinHeight <= 0 {

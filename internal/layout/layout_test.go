@@ -114,3 +114,20 @@ func TestDefaultWeaponLayoutIsValid(t *testing.T) {
 		t.Error("a weapon grid without columns must be rejected")
 	}
 }
+
+func TestDefaultCharacterLayout(t *testing.T) {
+	l := Default()
+	if err := l.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if got := l.Characters.Constellations.At(2); got != (Point{1130, 330}) {
+		t.Errorf("third constellation at %v", got)
+	}
+	if got := l.Characters.Talents.At(2); got != (Point{1130, 230}) {
+		t.Errorf("third talent at %v", got)
+	}
+	l.Characters.Talents.StepY = 0
+	if l.Validate() == nil {
+		t.Error("a talent column without a step must be rejected")
+	}
+}
