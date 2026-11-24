@@ -371,6 +371,11 @@ func (g *recordingGame) PressEnter() error {
 	return nil
 }
 
+func (g *recordingGame) PressEscape() error {
+	g.log = append(g.log, "escape")
+	return nil
+}
+
 func achievementCatalog() *catalog.Catalog {
 	return catalog.New(catalog.Data{Achievements: []catalog.Achievement{
 		{Name: "Alpha", IDs: []game.AchievementID{1}},

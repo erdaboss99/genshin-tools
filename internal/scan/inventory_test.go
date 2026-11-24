@@ -128,6 +128,8 @@ func (s *simulatedInventory) Type(string) error { return nil }
 
 func (s *simulatedInventory) PressEnter() error { return nil }
 
+func (s *simulatedInventory) PressEscape() error { return nil }
+
 func (s *simulatedInventory) itemIn(frame *image.RGBA) int {
 	at := s.win().Rect(s.panel).Min
 	c := frame.RGBAAt(at.X+1, at.Y+1)
