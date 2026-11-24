@@ -64,7 +64,7 @@ func Default() Layout {
 		Characters: Characters{
 			Header:           Box{85, 10, 305, 55},
 			Level:            Box{960, 135, 1125, 163},
-			NextCharacter:    Point{1230, 350},
+			NextCharacter:    Point{1230, 360},
 			AttributesTab:    Point{170, 105},
 			ConstellationTab: Point{170, 245},
 			TalentsTab:       Point{135, 290},
