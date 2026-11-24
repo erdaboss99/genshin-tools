@@ -16,6 +16,7 @@ Usage:
 
 Scanning:
   artifacts     Scan artifacts from the live game or saved screenshots
+  characters    Scan characters from the live game, with the character screen open
   weapons       Scan weapons from the live game or saved screenshots
   achievements  Scan achievements from the live game or saved screenshots
 
@@ -78,6 +79,8 @@ func (a *app) dispatch(ctx context.Context, args []string) error {
 	switch command {
 	case "artifacts":
 		return a.runArtifacts(ctx, rest)
+	case "characters":
+		return a.runCharacters(ctx, rest)
 	case "weapons":
 		return a.runWeapons(ctx, rest)
 	case "achievements":
