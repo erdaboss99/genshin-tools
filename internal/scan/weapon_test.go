@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"image/draw"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/erdaboss99/gensin-tools/internal/catalog"
@@ -33,9 +34,20 @@ func weaponFrame(t *testing.T, banner color.RGBA) *image.RGBA {
 	return frame
 }
 
+// equip draws the strip an equipped weapon's "Equipped" line sits on.
+func equip(t *testing.T, frame *image.RGBA) *image.RGBA {
+	t.Helper()
+	win, err := layout.NewWindow(1280, 720)
+	if err != nil {
+		t.Fatal(err)
+	}
+	draw.Draw(frame, win.Rect(layout.Default().Weapons.EquippedBanner), image.NewUniform(equippedBannerColor), image.Point{}, draw.Src)
+	return frame
+}
+
 func TestWeaponParserReadsAWeapon(t *testing.T) {
 	p := weaponParser("Mistsplitter Reforged", "Lv. 90/90", "1", "Equipped: Kamisato Ayaka")
-	record, skipped, err := p.Parse(t.Context(), weaponFrame(t, nameplateColors[5].color))
+	record, skipped, err := p.Parse(t.Context(), equip(t, weaponFrame(t, nameplateColors[5].color)))
 	if err != nil || skipped {
 		t.Fatalf("err = %v, skipped = %v", err, skipped)
 	}
@@ -140,7 +152,7 @@ func TestScanWeaponsNotesRepeatsWithoutIssues(t *testing.T) {
 		}
 		return emit(Frame{Index: 1, Source: "b", Image: frame, Duplicate: true})
 	}
-	replies := []string{"Dull Blade", "Lv. 1/20", "1", "", "Dull Blade", "Lv. 1/20", "1", ""}
+	replies := []string{"Dull Blade", "Lv. 1/20", "1", "Dull Blade", "Lv. 1/20", "1"}
 	records, err := ScanWeapons(t.Context(), source, weaponParser(replies...), ScanOptions{Workers: 1})
 	if err != nil || len(records) != 2 {
 		t.Fatalf("records = %d, err = %v", len(records), err)
@@ -151,6 +163,69 @@ func TestScanWeaponsNotesRepeatsWithoutIssues(t *testing.T) {
 	for _, r := range records {
 		if len(r.Issues) != 0 {
 			t.Errorf("record %d has issues %v", r.Index, r.Issues)
+		}
+	}
+}
+
+func TestWeaponParserOnlyReadsTheHolderOfAnEquippedWeapon(t *testing.T) {
+	// The box holds stray marks and part of a description on weapons nobody holds.
+	record, _, err := weaponParser("Amos' Bow", "Lv. 1/20", "1", "ugh ice and snow.").Parse(t.Context(), weaponFrame(t, nameplateColors[4].color))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if record.Weapon.Location != "" || len(record.Issues) != 0 || record.Raw.Equipped != "" {
+		t.Errorf("location = %q, issues = %v, raw = %q", record.Weapon.Location, record.Issues, record.Raw.Equipped)
+	}
+}
+
+func TestWeaponParserFlagsAnUnknownHolder(t *testing.T) {
+	// The Traveler goes by the player's own name, which isn't in the catalog.
+	frame := equip(t, weaponFrame(t, nameplateColors[3].color))
+	record, _, err := weaponParser("Amos' Bow", "Lv. 1/20", "1", "ErdelyiR99").Parse(t.Context(), frame)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if record.Weapon.Location != "" || len(record.Issues) != 1 || !strings.Contains(record.Issues[0], "--traveler-name") {
+		t.Errorf("location = %q, issues = %v", record.Weapon.Location, record.Issues)
+	}
+
+	// With the name given, the weapon belongs to the Traveler.
+	p := weaponParser("Amos' Bow", "Lv. 1/20", "1", "ErdelyiR99")
+	p.TravelerName = "ErdelyiR99"
+	record, _, err = p.Parse(t.Context(), equip(t, weaponFrame(t, nameplateColors[3].color)))
+	if err != nil || record.Weapon.Location != game.CharacterTraveler || len(record.Issues) != 0 {
+		t.Errorf("location = %q, issues = %v, err = %v", record.Weapon.Location, record.Issues, err)
+	}
+}
+
+func TestWeaponParserGivesLowRarityWeaponsRefinementOne(t *testing.T) {
+	for _, rarity := range []int{1, 2} {
+		// Only the name and level are read, as the panel has no refinement to read.
+		record, _, err := weaponParser("Dull Blade", "Lv. 1/20").Parse(t.Context(), weaponFrame(t, nameplateColors[rarity].color))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if record.Weapon.Refinement != 1 || len(record.Issues) != 0 || len(record.Notes) != 1 {
+			t.Errorf("%d-star: refinement = %d, issues = %v, notes = %v", rarity, record.Weapon.Refinement, record.Issues, record.Notes)
+		}
+	}
+	// Three stars and up are still read.
+	record, _, _ := weaponParser("Dull Blade", "Lv. 1/20", "4").Parse(t.Context(), weaponFrame(t, nameplateColors[3].color))
+	if record.Weapon.Refinement != 4 {
+		t.Errorf("3-star refinement = %d, want the 4 that was read", record.Weapon.Refinement)
+	}
+}
+
+func TestWeaponEquipped(t *testing.T) {
+	for _, c := range []color.RGBA{{255, 231, 187, 255}, {247, 224, 183, 255}, {253, 229, 185, 255}} {
+		if !weaponEquipped(c) {
+			t.Errorf("%v should count as the equipped strip", c)
+		}
+	}
+	// The plain panel and the pinkish tones seen on other panels.
+	for _, c := range []color.RGBA{{235, 228, 215, 255}, {227, 183, 189, 255}, {209, 182, 184, 255}, {40, 40, 40, 255}} {
+		if weaponEquipped(c) {
+			t.Errorf("%v should not count as the equipped strip", c)
 		}
 	}
 }

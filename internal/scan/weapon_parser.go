@@ -2,6 +2,7 @@ package scan
 
 import (
 	"context"
+	"fmt"
 	"image"
 	"image/color"
 	"regexp"
@@ -40,6 +41,14 @@ var nameplateColors = []struct {
 	{4, color.RGBA{161, 86, 224, 255}},
 	{5, color.RGBA{188, 105, 50, 255}},
 }
+
+// equippedBannerColor is the cream strip an "Equipped" line is drawn on. It is the only
+// thing that tells an equipped weapon from one whose equipped box holds stray marks.
+var equippedBannerColor = color.RGBA{255, 231, 187, 255}
+
+// equippedBannerTolerance is how far a colour can be from the strip's and still count,
+// as a distance in RGB space. The plain panel is more than 30 away.
+const equippedBannerTolerance = 20
 
 var levelPattern = regexp.MustCompile(`(\d+)\s*/\s*(\d+)`)
 
@@ -95,6 +104,7 @@ func (p WeaponParser) Parse(ctx context.Context, frame *image.RGBA) (record Weap
 	}
 	record.Rarity = weaponRarity(imaging.MeanColor(frame, r.win.Rect(p.Layout.Nameplate)))
 	w.Lock = iconIsOn(imaging.MeanColor(frame, r.win.Rect(p.Layout.LockIcon)))
+	equipped := weaponEquipped(imaging.MeanColor(frame, r.win.Rect(p.Layout.EquippedBanner)))
 
 	if record.Raw.Level, err = r.read(p.Layout.Level, ocr.ModeLine, levelAllowed); err != nil {
 		return record, false, err
@@ -105,21 +115,34 @@ func (p WeaponParser) Parse(ctx context.Context, frame *image.RGBA) (record Weap
 		record.issue("unreadable level %q", record.Raw.Level)
 	}
 
-	refinement, raw, err := p.readRefinement(r)
-	if err != nil {
-		return record, false, err
-	}
-	record.Raw.Refinement = raw
-	if refinement > 0 {
-		w.Refinement = refinement
+	if record.Rarity >= 1 && record.Rarity <= 2 {
+		// One and two star weapons have no passive, so they can't be refined and the
+		// panel shows no refinement. In GOOD that is refinement 1.
+		w.Refinement = 1
+		record.Notes = append(record.Notes, fmt.Sprintf("%d-star weapons have no refinement, so it is 1", record.Rarity))
 	} else {
-		record.issue("unreadable refinement %q", record.Raw.Refinement)
+		refinement, raw, err := p.readRefinement(r)
+		if err != nil {
+			return record, false, err
+		}
+		record.Raw.Refinement = raw
+		if refinement > 0 {
+			w.Refinement = refinement
+		} else {
+			record.issue("unreadable refinement %q", record.Raw.Refinement)
+		}
 	}
 
-	if record.Raw.Equipped, err = r.read(p.Layout.Equipped, ocr.ModeLine, ""); err != nil {
-		return record, false, err
+	// Without the banner nobody holds the weapon, whatever the box holds, which is
+	// often stray marks or a bit of the description.
+	if equipped {
+		if record.Raw.Equipped, err = r.read(p.Layout.Equipped, ocr.ModeLine, ""); err != nil {
+			return record, false, err
+		}
+		if w.Location = resolveLocation(p.Catalog, p.TravelerName, record.Raw.Equipped); w.Location == "" {
+			record.issue("equipped by %q, which isn't a character I know: if it's the Traveler, pass --traveler-name with your in-game name", record.Raw.Equipped)
+		}
 	}
-	w.Location = resolveLocation(p.Catalog, p.TravelerName, record.Raw.Equipped)
 
 	if verr := w.Validate(); verr != nil {
 		for line := range strings.SplitSeq(verr.Error(), "\n") {
@@ -197,4 +220,10 @@ func weaponRarity(c color.RGBA) game.Rarity {
 		}
 	}
 	return best
+}
+
+// weaponEquipped reports whether the equipped strip's colour is showing.
+func weaponEquipped(c color.RGBA) bool {
+	dr, dg, db := int(c.R)-int(equippedBannerColor.R), int(c.G)-int(equippedBannerColor.G), int(c.B)-int(equippedBannerColor.B)
+	return dr*dr+dg*dg+db*db <= equippedBannerTolerance*equippedBannerTolerance
 }
