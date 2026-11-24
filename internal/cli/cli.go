@@ -21,7 +21,7 @@ Scanning:
   achievements  Scan achievements from the live game or saved screenshots
 
 Exporting:
-  export good    Convert an artifact scan to GOOD (Genshin Optimizer and others)
+  export good    Convert the artifact, weapon and character scans to GOOD (Genshin Optimizer and others)
   export paimon  Convert an achievement scan to Paimon.moe
   export seelie  Convert an achievement scan to Seelie.me
 
@@ -32,7 +32,7 @@ Setup:
   doctor        Check that everything needed for scanning is in place
   calibrate     Draw the scan regions on a screenshot and show what OCR reads
   capture       Save a screenshot of the game window
-  update-data   Download the latest artifact, character and achievement names
+  update-data   Download the latest artifact, character, weapon and achievement names
   version       Print the version
 
 Run "gensin-scan <command> -h" for a command's flags.
