@@ -54,7 +54,7 @@ func Default() Layout {
 			Name:       Box{-393, 81, -97, 116},
 			Nameplate:  Box{-408, 80, -81, 118},
 			Level:      Box{-388, 285, -302, 305},
-			Refinement: Box{-389, 313, -364, 335},
+			Refinement: Box{-385, 317, -369, 331},
 			Equipped:   Box{-272, -110, -82, -85},
 			LockIcon:   Box{-121, 284, -117, 288},
 		},
