@@ -123,11 +123,8 @@ func TestDefaultCharacterLayout(t *testing.T) {
 	if got := l.Characters.Constellations.At(2); got != (Point{1130, 330}) {
 		t.Errorf("third constellation at %v", got)
 	}
-	if got := l.Characters.Talents.At(2); got != (Point{1130, 230}) {
-		t.Errorf("third talent at %v", got)
-	}
-	l.Characters.Talents.StepY = 0
+	l.Characters.TalentStep = 0
 	if l.Validate() == nil {
-		t.Error("a talent column without a step must be rejected")
+		t.Error("a talent list without a step must be rejected")
 	}
 }

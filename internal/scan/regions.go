@@ -51,12 +51,22 @@ func WeaponRegions(l layout.Weapons, win layout.Window, _ *image.RGBA) []NamedRe
 // CharacterRegions lists the character screen regions that are read. They sit on
 // different pages, so no single screenshot shows all of them in use.
 func CharacterRegions(l layout.Characters, win layout.Window) []NamedRect {
-	return []NamedRect{
+	regions := []NamedRect{
 		{"header", win.Rect(l.Header)},
 		{"level", win.Rect(l.Level)},
 		{"activate", win.Rect(l.Activate)},
-		{"talentLevel", win.Rect(l.TalentLevel)},
 	}
+	// Three talents, and the fourth position that characters with an alternate sprint
+	// have their burst in.
+	for i, name := range []string{"auto", "skill", "burst", "burst*"} {
+		regions = append(regions, NamedRect{"talent " + name, win.Rect(talentLevelBox(l, i))})
+	}
+	return regions
+}
+
+// talentLevelBox returns where the level of the talent at a position is shown.
+func talentLevelBox(l layout.Characters, position int) layout.Box {
+	return l.TalentLevel.Shifted(l.TalentStep * position)
 }
 
 // CharacterTargets lists where the character scan clicks.
@@ -66,10 +76,6 @@ func CharacterTargets(l layout.Characters, win layout.Window) []image.Point {
 	}
 	for i := range 6 {
 		points = append(points, win.Point(l.Constellations.At(i)))
-	}
-	// Four talent positions, as characters with an alternate sprint use the fourth.
-	for i := range 4 {
-		points = append(points, win.Point(l.Talents.At(i)))
 	}
 	return points
 }

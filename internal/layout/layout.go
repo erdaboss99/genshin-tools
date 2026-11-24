@@ -59,8 +59,9 @@ func Default() Layout {
 			Equipped:   Box{-272, -110, -82, -85},
 			LockIcon:   Box{-121, 284, -117, 288},
 		},
-		// The character coordinates come from Inventory Kamera and haven't been
-		// checked against the real game, so run calibrate first.
+		// The character coordinates started from Inventory Kamera's, and were then
+		// adjusted against screenshots of the attributes, constellation and talents
+		// pages of a 1920x1080 client.
 		Characters: Characters{
 			Header:           Box{85, 10, 305, 55},
 			Level:            Box{960, 135, 1125, 163},
@@ -70,8 +71,8 @@ func Default() Layout {
 			TalentsTab:       Point{135, 290},
 			Constellations:   Column{X: 1130, FirstY: 180, StepY: 75},
 			Activate:         Box{70, 665, 100, 695},
-			Talents:          Column{X: 1130, FirstY: 110, StepY: 60},
-			TalentLevel:      Box{0, 92, 373, 143},
+			TalentLevel:      Box{1080, 113, 1136, 131},
+			TalentStep:       61,
 		},
 		Achievements: Achievements{
 			ClearSearch:    Point{300, 90},
@@ -122,8 +123,8 @@ func (l Layout) Validate() error {
 		errs = append(errs, errors.New("inventory: starMinArea exceeds starMaxArea"))
 	}
 	c := l.Characters
-	if c.Constellations.StepY <= 0 || c.Talents.StepY <= 0 {
-		errs = append(errs, errors.New("characters: constellations and talents need a positive stepY"))
+	if c.Constellations.StepY <= 0 || c.TalentStep <= 0 {
+		errs = append(errs, errors.New("characters: constellations.stepY and talentStep must be positive"))
 	}
 	a := l.Achievements
 	if a.MaxRows <= 0 || a.MedalMinHeight <= 0 {

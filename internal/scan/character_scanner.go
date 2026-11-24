@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image"
 	"log/slog"
 	"slices"
 	"strings"
@@ -141,7 +142,6 @@ func (s CharacterScanner) scanCharacter(ctx context.Context, win layout.Window, 
 	if err := s.readTalents(ctx, win, &record, header.Name); err != nil {
 		return record, err
 	}
-	s.removeBoosts(&record, header.Name)
 
 	if verr := c.Validate(); verr != nil {
 		for line := range strings.SplitSeq(verr.Error(), "\n") {
@@ -224,68 +224,70 @@ func (s CharacterScanner) readConstellation(ctx context.Context, win layout.Wind
 	return s.closeOverlay(ctx)
 }
 
+// readTalents reads the three talent levels from the talents page, which lists them
+// all, and notes which are drawn in blue. Those are the ones constellations raised.
 func (s CharacterScanner) readTalents(ctx context.Context, win layout.Window, record *CharacterRecord, name string) error {
 	if err := s.click(ctx, win, s.Layout.TalentsTab, tabDelay); err != nil {
 		return err
 	}
-	levels := make([]int, talentCount)
-	for i := range talentCount {
+	kinds := [talentCount]game.TalentKind{game.TalentAuto, game.TalentSkill, game.TalentBurst}
+	var levels [talentCount]int
+	var blue [talentCount]bool
+	for i, kind := range kinds {
 		position := i
-		if i == talentCount-1 && hasAltSprint(name) {
+		if kind == game.TalentBurst && hasAltSprint(name) {
 			position++
 		}
-		if err := s.click(ctx, win, s.Layout.Talents.At(position), nodeDelay); err != nil {
-			return err
-		}
-		level, raw, err := s.readTalentLevel(ctx)
+		rect := win.Rect(talentLevelBox(s.Layout, position))
+		level, boosted, raw, err := s.readTalentLevel(ctx, rect)
 		if err != nil {
 			return err
 		}
 		record.Raw.Talents = append(record.Raw.Talents, raw)
 		if level == 0 {
-			record.issue("unreadable %s talent level %q", [...]string{"auto", "skill", "burst"}[i], raw)
+			record.issue("unreadable %s talent level %q", kind, raw)
 		}
-		levels[i] = level
+		levels[i], blue[i] = level, boosted
+	}
+
+	known, haveKnown := s.Catalog.BoostsFor(name)
+	raised, note, issue := resolveBoosts(record.Character.Constellation, blue, known, haveKnown)
+	if note != "" {
+		record.note("%s", note)
+	}
+	if issue != "" {
+		record.issue("%s", issue)
+	}
+	for i, kind := range kinds {
+		if raised[i] && levels[i] > 0 {
+			levels[i] -= 3
+			record.Boosted = append(record.Boosted, kind)
+		}
 	}
 	record.Character.Talent = game.Talents{Auto: levels[0], Skill: levels[1], Burst: levels[2]}
-	return s.closeOverlay(ctx)
+	return nil
 }
 
-func (s CharacterScanner) readTalentLevel(ctx context.Context) (level int, raw string, err error) {
+func (s CharacterScanner) readTalentLevel(ctx context.Context, rect image.Rectangle) (level int, boosted bool, raw string, err error) {
 	for attempt := range readAttempts {
 		r, err := s.reader(ctx)
 		if err != nil {
-			return 0, raw, err
+			return 0, false, raw, err
 		}
-		raw, err = r.read(s.Layout.TalentLevel, ocr.ModeBlock, "")
+		raw, err = r.readRect(rect, ocr.ModeLine, levelAllowed)
 		if err != nil {
-			return 0, raw, err
+			return 0, false, raw, err
 		}
 		if level, ok := parseTalentLevel(raw); ok {
-			return level, raw, nil
+			return level, talentBoosted(r.frame, rect), raw, nil
 		}
 		if attempt < readAttempts-1 {
 			if err := s.Pace.sleep(ctx, rereadDelay); err != nil {
-				return 0, raw, err
+				return 0, false, raw, err
 			}
 		}
 	}
-	return 0, raw, nil
-}
-
-// removeBoosts takes the constellation bonuses off the talent levels the game shows.
-func (s CharacterScanner) removeBoosts(record *CharacterRecord, name string) {
-	c := &record.Character
-	if c.Constellation < 3 {
-		return
-	}
-	boosts, ok := s.Catalog.BoostsFor(name)
-	if !ok {
-		record.issue("no constellation data for %s, so its talent levels may include constellation bonuses", name)
-		return
-	}
-	c.Talent = c.Talent.WithoutBoosts(c.Constellation, boosts.C3, boosts.C5)
-	record.note("took the constellation bonuses off the talent levels")
+	return 0, false, raw, nil
 }
 
 func (s CharacterScanner) closeOverlay(ctx context.Context) error {

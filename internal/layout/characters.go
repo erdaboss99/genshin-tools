@@ -32,9 +32,10 @@ type Characters struct {
 	// Activate samples beside the "Activate" label, which is white for a
 	// constellation that isn't unlocked yet.
 	Activate Box `json:"activate"`
-	// Talents lists the talents. Characters with an alternate sprint have it before
-	// the burst, so the burst is one step further down for them.
-	Talents Column `json:"talents"`
-	// TalentLevel holds the level of the selected talent.
+	// TalentLevel holds the level of the first talent, the normal attack, on the
+	// talents page. The skill and the burst follow, TalentStep apart. Characters with
+	// an alternate sprint have it before the burst, so the burst is one step further
+	// down for them.
 	TalentLevel Box `json:"talentLevel"`
+	TalentStep  int `json:"talentStep"`
 }
