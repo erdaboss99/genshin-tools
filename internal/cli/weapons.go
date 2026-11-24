@@ -113,13 +113,19 @@ func (a *app) weaponSource(ctx context.Context, opts weaponOptions, engine engin
 }
 
 func (a *app) printWeaponSummary(records []scan.WeaponRecord, path string) {
-	withIssues := 0
+	withIssues, repeats := 0, 0
 	for _, r := range records {
 		if len(r.Issues) > 0 {
 			withIssues++
 		}
+		if len(r.Notes) > 0 {
+			repeats++
+		}
 	}
 	fmt.Fprintf(a.stdout, "Scanned %d weapons: %d exportable, %d with issues.\n", len(records), len(records)-withIssues, withIssues)
+	if repeats > 0 {
+		fmt.Fprintf(a.stdout, "%d repeat the weapon before them, which is normal for stacks of the same weapon.\n", repeats)
+	}
 	fmt.Fprintf(a.stdout, "Report written to %s\n", path)
 	if withIssues > 0 {
 		fmt.Fprintln(a.stdout, `Check the "issues" fields in the report. If many fail the same way, run "gensin-scan calibrate --screen weapons".`)
