@@ -33,7 +33,12 @@ func (r reader) read(box layout.Box, mode ocr.Mode, allow string) (string, error
 }
 
 func (r reader) readRect(rect image.Rectangle, mode ocr.Mode, allow string) (string, error) {
-	img := imaging.PrepareForOCR(r.frame, rect, imaging.OCRScale(r.win.Width))
+	return r.readRectScaled(rect, mode, allow, imaging.OCRScale(r.win.Width))
+}
+
+// readRectScaled is readRect with an explicit enlargement factor.
+func (r reader) readRectScaled(rect image.Rectangle, mode ocr.Mode, allow string, scale int) (string, error) {
+	img := imaging.PrepareForOCR(r.frame, rect, scale)
 	return r.ocr.Recognize(r.ctx, ocr.Request{Image: img, Mode: mode, Allow: allow})
 }
 

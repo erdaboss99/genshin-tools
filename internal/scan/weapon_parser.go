@@ -105,10 +105,12 @@ func (p WeaponParser) Parse(ctx context.Context, frame *image.RGBA) (record Weap
 		record.issue("unreadable level %q", record.Raw.Level)
 	}
 
-	if record.Raw.Refinement, err = r.read(p.Layout.Refinement, ocr.ModeLine, "12345"); err != nil {
+	refinement, raw, err := p.readRefinement(r)
+	if err != nil {
 		return record, false, err
 	}
-	if refinement, convErr := strconv.Atoi(keepDigits(record.Raw.Refinement)); convErr == nil && refinement >= 1 && refinement <= 5 {
+	record.Raw.Refinement = raw
+	if refinement > 0 {
 		w.Refinement = refinement
 	} else {
 		record.issue("unreadable refinement %q", record.Raw.Refinement)
@@ -127,6 +129,32 @@ func (p WeaponParser) Parse(ctx context.Context, frame *image.RGBA) (record Weap
 		}
 	}
 	return record, false, nil
+}
+
+// readRefinement reads the refinement badge, a single digit that Tesseract sometimes
+// misses on the first try. The retries only run after a failed read: first as a
+// single character, then with the crop enlarged further. refinement is 0 when no
+// attempt gave a digit from 1 to 5, and raw is what the first attempt read.
+func (p WeaponParser) readRefinement(r reader) (refinement int, raw string, err error) {
+	rect := r.win.Rect(p.Layout.Refinement)
+	scale := imaging.OCRScale(r.win.Width)
+	attempts := []struct {
+		mode  ocr.Mode
+		scale int
+	}{{ocr.ModeLine, scale}, {ocr.ModeChar, scale}, {ocr.ModeChar, scale * 2}}
+	for i, attempt := range attempts {
+		text, err := r.readRectScaled(rect, attempt.mode, "12345", attempt.scale)
+		if err != nil {
+			return 0, raw, err
+		}
+		if i == 0 {
+			raw = text
+		}
+		if n, convErr := strconv.Atoi(keepDigits(text)); convErr == nil && n >= 1 && n <= 5 {
+			return n, raw, nil
+		}
+	}
+	return 0, raw, nil
 }
 
 // parseWeaponLevel reads "Lv. 80/90". The number after the slash is the level cap of

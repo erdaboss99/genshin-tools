@@ -63,6 +63,24 @@ func TestWeaponParserReportsUnreadableFields(t *testing.T) {
 	}
 }
 
+func TestWeaponParserRetriesRefinement(t *testing.T) {
+	// The first read is empty, the single-character retry finds the digit.
+	p := weaponParser("Amos' Bow", "Lv. 40/50", "", "4", "")
+	record, _, err := p.Parse(t.Context(), weaponFrame(t, nameplateColors[5].color))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if record.Weapon.Refinement != 4 || len(record.Issues) != 0 {
+		t.Errorf("Refinement = %d, Issues = %v", record.Weapon.Refinement, record.Issues)
+	}
+	// Every attempt failing still leaves the first read in the raw text.
+	p = weaponParser("Amos' Bow", "Lv. 40/50", "x", "", "", "")
+	record, _, _ = p.Parse(t.Context(), weaponFrame(t, nameplateColors[5].color))
+	if record.Weapon.Refinement != 0 || record.Raw.Refinement != "x" || !slices.Contains(record.Issues, `unreadable refinement "x"`) {
+		t.Errorf("Refinement = %d, Raw = %q, Issues = %v", record.Weapon.Refinement, record.Raw.Refinement, record.Issues)
+	}
+}
+
 func TestWeaponParserSkipsEnhancementOre(t *testing.T) {
 	for _, name := range []string{"Enhancement Ore", "Fine Enhancement Ore", "Mystic Enhancement Ore"} {
 		_, skipped, err := weaponParser(name).Parse(t.Context(), blankFrame())
