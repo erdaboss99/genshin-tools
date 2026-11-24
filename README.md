@@ -348,7 +348,9 @@ Reads every character from the character screen. Press `C` to open it with any c
 
 The game shows talent levels with constellation bonuses added, and GOOD wants them without. Constellations 3 and 5 each raise one talent by 3 levels, and the game draws a raised level in light blue. The scan reads all three levels from the talents page and takes 3 off each blue one, which also works for the Traveler. It checks that against the constellation data from HoYoWiki, which `update-data` refreshes. That data says which talent each constellation raises, and a few characters (such as Neuvillette and Lyney) have the normal attack instead of the skill or burst. If the blue talents don't match the constellation or the data, the character gets an `issues` entry rather than a guess. Tartaglia's passive adds a normal attack level to the first four characters, and the scan takes it off.
 
-The Traveler's key includes their element, such as `TravelerAnemo`, which is how GOOD names them.
+The Traveler's key includes their element, such as `TravelerAnemo`, which is how GOOD names them. The game shows your own name for the Traveler, so pass it with `--traveler-name`, or that character is reported as unreadable.
+
+Each field is read until two reads in a row agree, because a page that is still fading in can give a wrong but believable number once. A field that never settles gets an `issues` entry, as does a talent above level 10 once the bonuses are taken off.
 
 **The character scan has been calibrated, but not run end to end.** On clean 1920×1080 screenshots of the attributes, constellation and talents pages, the header, level and talent boxes all read correctly, the "Activate" test told locked constellations from unlocked ones, and the blue test picked out exactly the two boosted talents. The clicking through characters hasn't been run on the live game. Try `--limit 3` first, and use `calibrate --screen characters` if a box is off.
 
