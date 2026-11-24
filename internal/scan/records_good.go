@@ -49,6 +49,9 @@ type CharacterRecord struct {
 	// Element is the element shown beside the name. For the Traveler it is part of
 	// the key.
 	Element string `json:"element,omitempty"`
+	// Boosted lists the talents that constellations raised, whose levels had their
+	// bonus taken off.
+	Boosted []game.TalentKind `json:"boosted,omitempty"`
 	// Issues are problems that may make the character wrong.
 	Issues []string `json:"issues,omitempty"`
 	// Notes are corrections and other things worth knowing that don't make the

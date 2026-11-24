@@ -1,6 +1,8 @@
 package scan
 
 import (
+	"fmt"
+	"image"
 	"image/color"
 	"strconv"
 	"strings"
@@ -138,4 +140,72 @@ func applyTartagliaBuff(records []CharacterRecord) bool {
 		return true
 	}
 	return false
+}
+
+// cyanMinShare is how much of a talent's level text must be light blue for it to
+// count as boosted. Boosted levels are about 16% blue and others 0%.
+const cyanMinShare = 0.03
+
+// talentBoosted reports whether a talent's level is drawn in the light blue the game
+// uses when a constellation raises it.
+func talentBoosted(frame *image.RGBA, rect image.Rectangle) bool {
+	rect = rect.Intersect(frame.Bounds())
+	cyan, total := 0, 0
+	for y := rect.Min.Y; y < rect.Max.Y; y++ {
+		for x := rect.Min.X; x < rect.Max.X; x++ {
+			p := frame.RGBAAt(x, y)
+			total++
+			if p.G > 170 && p.B > 170 && p.R < 140 && int(p.G)-int(p.R) > 60 {
+				cyan++
+			}
+		}
+	}
+	return total > 0 && float64(cyan)/float64(total) >= cyanMinShare
+}
+
+// resolveBoosts works out which talents a character's constellations raised, from
+// the talent levels that are drawn in blue and, when there is any, the constellation
+// data. The blue says what is on screen, and the data says what should be there, so
+// they check each other. Bonuses that don't come from constellations, such as
+// Tartaglia's passive on the normal attack, are blue too and are left out.
+func resolveBoosts(constellation int, blue [3]bool, known catalog.ConstellationBoosts, haveKnown bool) (raised [3]bool, note string, issue string) {
+	index := map[game.TalentKind]int{game.TalentAuto: 0, game.TalentSkill: 1, game.TalentBurst: 2}
+	want := 0
+	if constellation >= 3 {
+		want = 1
+	}
+	if constellation >= 5 {
+		want = 2
+	}
+	var expected [3]bool
+	if haveKnown {
+		if constellation >= 3 {
+			expected[index[known.C3]] = true
+		}
+		if constellation >= 5 {
+			expected[index[known.C5]] = true
+		}
+	}
+	count := func(b [3]bool) (n int) {
+		for _, v := range b {
+			if v {
+				n++
+			}
+		}
+		return n
+	}
+
+	switch {
+	case count(blue) == want && (!haveKnown || blue == expected):
+		return blue, "", ""
+	case count(blue) == want:
+		return blue, "", "the talents drawn in blue don't match the constellation data"
+	case count(blue) == want+1 && blue[0] && !expected[0]:
+		// The normal attack is also raised by something that isn't a constellation.
+		blue[0] = false
+		if count(blue) == want && (!haveKnown || blue == expected) {
+			return blue, "the normal attack has a bonus that isn't from a constellation", ""
+		}
+	}
+	return [3]bool{}, "", fmt.Sprintf("%d talents are drawn in blue, but constellation %d raises %d", count(blue), constellation, want)
 }
