@@ -56,7 +56,7 @@ func Default() Layout {
 			Level:      Box{-388, 285, -302, 305},
 			Refinement: Box{-389, 313, -364, 335},
 			Equipped:   Box{-272, -110, -82, -85},
-			LockIcon:   Box{-159, 283, -155, 287},
+			LockIcon:   Box{-121, 284, -117, 288},
 		},
 		Achievements: Achievements{
 			ClearSearch:    Point{300, 90},
