@@ -528,58 +528,29 @@ Weapon and character reports use the same envelope, with `weapon` or `character`
 
 ## How it works
 
-### The artifact pipeline
+### The inventory pipeline
 
-The live game and saved screenshots feed the same pipeline, so offline scans exercise the same code as live ones.
+Artifacts and weapons share one pipeline. The live game and saved screenshots feed it the same way, so offline scans exercise the same code as live ones.
 
 ```mermaid
 flowchart TD
-    live["Live game: click an item and wait for the panel to settle"] --> queue
+    live["Live game: click an item and wait for the panel to settle"] --> queue["Bounded frame queue"]
     saved["Saved screenshots: load PNG or JPEG"] --> queue
-    queue["Bounded frame queue"] --> workers["Worker pool of OCR processes"]
-    workers --> material{"Upgrade material?"}
+    queue --> workers["Worker pool of OCR processes"]
+    workers --> material{"Upgrade material or enhancement ore?"}
     material -- Yes --> skip["Skip it"]
-    material -- No --> parse["Read the artifact"]
+    material -- No --> parse["Read the artifact or weapon"]
     parse --> validate{"Follows the game's rules?"}
     validate -- Yes --> record["Clean record"]
     validate -- No --> issue["Record with issues"]
-    record --> report["artifacts.json"]
+    record --> report["artifacts.json or weapons.json"]
     issue --> report
     report --> export{"Any issues?"}
     export -- No --> good["good.json"]
     export -- Yes --> held["Left out unless --include-issues is passed"]
 ```
 
-### Reading one artifact
-
-```mermaid
-flowchart TD
-    frame["Frame"] --> name["OCR the name and match it to a set"]
-    name --> slot{"Slot readable on the panel?"}
-    slot -- Yes --> panel["Use the panel's slot"]
-    slot -- No --> catalog["Fall back to reference data"]
-    panel --> main
-    catalog --> main
-    main["Main stat: fixed on flowers and plumes, otherwise OCR narrowed by slot"] --> stars["Count rarity stars by colour"]
-    stars --> band{"Purple elixir band present?"}
-    band -- Yes --> shift["Move the boxes below it down"]
-    band -- No --> toggles
-    shift --> toggles["Read the lock and Astral Mark icons"]
-    toggles --> level["OCR the level"]
-    level --> subs["OCR the substats"]
-    subs --> plausible{"Can the value roll at this rarity?"}
-    plausible -- Yes --> keep["Keep the substat"]
-    plausible -- No --> repair{"Repairable, such as a lost decimal point?"}
-    repair -- Yes --> keep
-    repair -- No --> flag["Add an issue"]
-    keep --> equipped["OCR the equipped character"]
-    flag --> equipped
-    equipped --> check["Check level, main stat and substat count"]
-```
-
-### The weapon scan
-
-Weapons go through the same pipeline as artifacts, with a parser for the weapon panel:
+### Reading one weapon
 
 ```mermaid
 flowchart TD
@@ -590,16 +561,37 @@ flowchart TD
     match --> rarity["Rarity from the banner colour, lock from its toggle"]
     rarity --> level["OCR the level and its cap: the cap gives the ascension"]
     level --> low{"1 or 2 stars?"}
-    low -- Yes --> one["Refinement is 1"]
-    low -- No --> badge["Read the refinement badge, retrying on other channels and modes"]
-    one --> strip
-    badge --> strip{"Equipped strip showing?"}
+    low -- Yes --> one["Refinement is 1, as the panel has none"]
+    low -- No --> badge["Read the refinement badge"]
+    one --> strip{"Is the Equipped strip showing?"}
+    badge --> strip
     strip -- No --> free["No holder"]
     strip -- Yes --> holder["OCR the holder and match it to a character"]
     holder --> known{"A character I know?"}
     known -- Yes --> done["Weapon record"]
     known -- No --> issue["Issue: pass --traveler-name if it's the Traveler"]
     free --> done
+```
+
+### Reading the refinement badge
+
+The badge is one digit on a coloured square, grey on most weapons and orange on others. The darkest channel can't see the orange one, so the green channel goes first, and each failed read falls through to the next:
+
+```mermaid
+flowchart TD
+    badge["Refinement badge"] --> first["Green channel, read as a line"]
+    first --> firstok{"A digit from 1 to 5?"}
+    firstok -- Yes --> use["Use it"]
+    firstok -- No --> second["Darkest channel, read as a line"]
+    second --> secondok{"A digit from 1 to 5?"}
+    secondok -- Yes --> use
+    secondok -- No --> third["Green channel, read as a single character"]
+    third --> thirdok{"A digit from 1 to 5?"}
+    thirdok -- Yes --> use
+    thirdok -- No --> fourth["Darkest channel, single character, enlarged further"]
+    fourth --> fourthok{"A digit from 1 to 5?"}
+    fourthok -- Yes --> use
+    fourthok -- No --> issue["Issue: unreadable refinement"]
 ```
 
 ### The character scan
@@ -617,12 +609,50 @@ flowchart TD
     locked -- No --> nodes
     locked -- Yes --> count["The nodes before it are the unlocked ones"]
     count --> talents["Open the talents and read the three levels"]
-    talents --> blue["Take 3 off each level drawn in blue"]
-    blue --> check{"Matches the constellation and the HoYoWiki data?"}
-    check -- Yes --> next["Click the next character arrow"]
-    check -- No --> issue["Record it with an issue"]
+    talents --> boosts["Work out which talents are boosted and take 3 off each"]
+    boosts --> check{"Anything wrong?"}
+    check -- No --> next["Click the next character arrow"]
+    check -- Yes --> issue["Record it with an issue"]
     issue --> next
     next --> attributes
+```
+
+### Reading one field
+
+The header, the level and every talent level are read the same way. A page that is still fading in can give a wrong but believable number once, such as an `11` for a `1`, and it rarely gives the same wrong one twice, so a value is only accepted once it has come up twice:
+
+```mermaid
+flowchart TD
+    read["Read the field and parse it"] --> parsed{"Could it be parsed?"}
+    parsed -- Yes --> seen{"Has this value come up before?"}
+    seen -- Yes --> accept["Accept it"]
+    seen -- No --> remember["Remember it"]
+    parsed -- No --> more{"Attempts left, out of 8?"}
+    remember --> more
+    more -- Yes --> wait["Wait 150 ms"]
+    wait --> read
+    more -- No --> any{"Was any read valid?"}
+    any -- Yes --> last["Use the last valid one, and add an issue"]
+    any -- No --> empty["Leave it empty, and add an issue"]
+```
+
+### Working out the talent boosts
+
+The game shows each talent with its constellation bonus added, and draws a boosted level in light blue. Constellation 3 raises one talent by 3 levels and constellation 5 raises another, so the scan compares what is blue with what the constellation allows, and with the HoYoWiki data:
+
+```mermaid
+flowchart TD
+    blue["Count the talents drawn in blue"] --> allowed["Count what the constellation raises: none below C3, one at C3 or C4, two at C5 or C6"]
+    allowed --> same{"Is the blue count the same?"}
+    same -- Yes --> data{"Does the HoYoWiki data name the same talents?"}
+    data -- "Yes, or no data" --> take["Take 3 off each blue talent"]
+    data -- No --> takeflag["Take 3 off each blue talent, and add an issue"]
+    same -- No --> extra{"One too many, with the normal attack among them?"}
+    extra -- Yes --> drop["Set the normal attack aside, as Tartaglia's passive makes it blue"]
+    drop --> rest{"Does the rest match?"}
+    rest -- Yes --> takerest["Take 3 off the rest, and add a note"]
+    rest -- No --> none["Take nothing off, and add an issue"]
+    extra -- No --> none
 ```
 
 ### The achievement scan
@@ -651,45 +681,6 @@ flowchart TD
     review --> retry
     retry --> done
     done --> start
-```
-
-### Package dependencies
-
-Each box is a Go module in the [workspace](#workspace). `control` and `ocr` depend on nothing outside the standard library, not even each other.
-
-```mermaid
-flowchart TD
-    subgraph root["Module: gensin-tools"]
-        main["cmd/gensin-scan"] --> cli["internal/cli"]
-        cli --> scan["internal/scan"]
-        cli --> export["internal/export"]
-        cli --> catalog["internal/catalog"]
-        cli --> imaging["internal/imaging"]
-        cli --> layout["internal/layout"]
-        cli --> game["internal/game"]
-        scan --> catalog
-        scan --> imaging
-        scan --> layout
-        scan --> fuzzy["internal/fuzzy"]
-        scan --> game
-        export --> game
-        catalog --> fuzzy
-        catalog --> game
-    end
-    subgraph controlModule["Module: control"]
-        control["control"]
-    end
-    subgraph ocrModule["Module: ocr"]
-        ocr["ocr"]
-    end
-    subgraph toolsModule["Module: tools/genfixtures"]
-        genfixtures["genfixtures"] --> xImage["golang.org/x/image"]
-    end
-    cli --> control
-    cli --> ocr
-    scan --> control
-    scan --> ocr
-    genfixtures -. draws test images for .-> scan
 ```
 
 ### Design decisions
