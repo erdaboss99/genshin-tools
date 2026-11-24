@@ -342,6 +342,7 @@ Reads every character from the character screen. Press `C` to open it with any c
 | `-o`              | `characters.json` | Report file                                                   |
 | `--traveler-name` |                   | Your in-game name, which the game shows instead of "Traveler" |
 | `--limit`         | `0` (all)         | Stop after this many characters                               |
+| `--save-frames`   |                   | Save a screenshot of each page read, to check the results against. Each is about 1.7 MB, three per character |
 | `--pace`          | `1`               | Multiplier for delays. Raise it if screens get missed         |
 | `--countdown`     | `5s`              | Delay before the scan starts                                  |
 
