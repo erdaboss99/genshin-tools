@@ -41,6 +41,14 @@ func TestExitCodes(t *testing.T) {
 		{[]string{"export", "good", "stray"}, 2},
 		{[]string{"export", "good", "-i", "/does/not/exist.json"}, 1},
 		{[]string{"calibrate", "--screen", "bogus"}, 2},
+		{[]string{"weapons", "-h"}, 0},
+		{[]string{"weapons", "--no-such-flag"}, 2},
+		{[]string{"characters", "-h"}, 0},
+		{[]string{"characters", "--no-such-flag"}, 2},
+		{[]string{"extract"}, 2},
+		{[]string{"extract", "csv"}, 2},
+		{[]string{"extract", "paimon", "-h"}, 0},
+		{[]string{"extract", "paimon", "-i", "/does/not/exist.json"}, 1},
 	}
 	for _, tt := range tests {
 		if code, _, _ := run(t, tt.args...); code != tt.code {
@@ -350,5 +358,55 @@ func TestExportGOODIncludesCharacters(t *testing.T) {
 	}
 	if !strings.Contains(stdout, "1 characters") {
 		t.Errorf("summary = %q", stdout)
+	}
+}
+
+func TestExtractPaimonRoundTrips(t *testing.T) {
+	dir := t.TempDir()
+	paimon := filepath.Join(dir, "paimon.json")
+	report := filepath.Join(dir, "achievements.json")
+	merged := filepath.Join(dir, "merged.json")
+
+	// 80127 is the first stage of a three-stage achievement, 81000 a single-stage one,
+	// and 999999 isn't in the catalog. The false entry must be ignored.
+	source := `{"achievement":{"0":{"80127":true,"81000":true,"80128":false},"9":{"999999":true}},"wish-counter":{"pity":7}}`
+	if err := os.WriteFile(paimon, []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	code, stdout, stderr := run(t, "extract", "paimon", "-i", paimon, "-o", report)
+	if code != 0 {
+		t.Fatalf("extract failed: %s", stderr)
+	}
+	if !strings.Contains(stdout, "3 completed") || !strings.Contains(stdout, "1 stages are not in the name list") {
+		t.Errorf("summary = %q", stdout)
+	}
+
+	records, err := scan.ReadReport[scan.AchievementRecord](report)
+	if err != nil {
+		t.Fatalf("the report must be a valid scan report: %v", err)
+	}
+	if got := len(scan.CompletedAchievements(records.Items)); got != 3 {
+		t.Errorf("report holds %d completed stages, want 3", got)
+	}
+
+	if code, _, stderr := run(t, "export", "paimon", "-i", report, "--merge", paimon, "-o", merged); code != 0 {
+		t.Fatalf("export failed: %s", stderr)
+	}
+	raw, err := os.ReadFile(merged)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc struct {
+		Achievement map[string]map[string]bool `json:"achievement"`
+		Wish        map[string]int             `json:"wish-counter"`
+	}
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		t.Fatal(err)
+	}
+	if !doc.Achievement["0"]["80127"] || !doc.Achievement["0"]["81000"] || !doc.Achievement["9"]["999999"] || doc.Achievement["0"]["80128"] {
+		t.Errorf("achievements did not survive the round trip: %v", doc.Achievement)
+	}
+	if doc.Wish["pity"] != 7 {
+		t.Error("unrelated Paimon.moe data was lost")
 	}
 }
