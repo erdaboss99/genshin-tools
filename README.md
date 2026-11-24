@@ -38,7 +38,7 @@
 | Inventory traversal                     | Tested on the real game         | The first 384 items of that scan had no duplicates or ordering breaks. Items after that were below the rarity filter, so they weren't kept for checking. A simulated grid covers other window and inventory sizes |
 | Achievement scan                        | Tested on the real game         | A full live scan found 495 completed stages, matching the game's own total exactly                                                                                                                                |
 | **Character scan**                      | **Calibrated, not yet scanned** | Walking, parsing and the talent adjustment are covered by unit tests with a fake game. The boxes and tests were checked on real screenshots of all three pages, but no live character scan has been run |
-| **Weapon scan**                         | **Calibrated, not yet scanned** | Parsing is covered by unit tests with scripted OCR. On one 1920×1080 screenshot the boxes and click marks lined up, but no live weapon scan has been run |
+| Weapon scan                             | Tested on the real game         | A full scan of 52 weapons on a 1920×1080 client matched the game after the fixes above. Larger inventories haven't been scanned |
 | Exports                                 | Partly tested                   | Field names and set keys compared against Genshin Optimizer's schema and key list. Imports into the sites aren't covered by the test suite                                                                        |
 | Reference data                          | Tested                          | 297 of 299 artifact pieces match Genshin Optimizer's data; the other 2 have aliases                                                                                                                               |
 | Win32 capture and input                 | Tested on the real game         | Used by the live scans above, and `make test` runs the capture and input structure tests                                                                                                                          |
@@ -323,9 +323,9 @@ Reads weapons from the Weapons tab of the inventory. Open that tab first, then r
 .\gensin-scan.exe export good
 ```
 
-Each weapon gets a key, level, ascension, refinement, lock state and equipped character. The level is read as "level/cap", and the cap gives the ascension. The rarity comes from the colour of the name banner and only decides which weapons stay in the report.
+Each weapon gets a key, level, ascension, refinement, lock state and equipped character. The level is read as "level/cap", and the cap gives the ascension. The rarity comes from the colour of the name banner and decides which weapons stay in the report. One and two star weapons can't be refined, so their refinement is 1. A weapon only counts as equipped when the cream "Equipped" strip is showing, and if it names someone the catalog doesn't know, the weapon gets an `issues` entry. That is usually the Traveler, whose name is your own, so pass `--traveler-name` as you do for `artifacts` and `characters`.
 
-**The weapon scan has only had a calibration check so far.** On one 1920×1080 screenshot every box read its text correctly and the click marks sat on the item cards, but no full live scan has been run. Run `calibrate --screen weapons` with the weapon panel showing, and fix any box that is off with `--layout`. Try `--limit 10` before a full scan.
+**The weapon scan was checked on a full run of 52 weapons**, by comparing the report with a screenshot of each one. Try `--limit 10` first on a larger inventory, and use `calibrate --screen weapons` if a box is off.
 
 ### `characters`
 
