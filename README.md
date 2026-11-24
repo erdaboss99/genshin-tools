@@ -37,7 +37,7 @@
 | Artifact reading                        | Tested on the real game         | A full scan of a 748-item inventory on a 1920×1080 client exported 381 artifacts with no issues. A sample of frames was compared by eye with the game; the rest weren't checked individually                      |
 | Inventory traversal                     | Tested on the real game         | The first 384 items of that scan had no duplicates or ordering breaks. Items after that were below the rarity filter, so they weren't kept for checking. A simulated grid covers other window and inventory sizes |
 | Achievement scan                        | Tested on the real game         | A full live scan found 495 completed stages, matching the game's own total exactly                                                                                                                                |
-| **Weapon scan**                         | **Not tested on the real game** | Parsing is covered by unit tests with scripted OCR. The weapon screen boxes and grid come from Inventory Kamera's data and are unchecked |
+| **Weapon scan**                         | **Calibrated, not yet scanned** | Parsing is covered by unit tests with scripted OCR. On one 1920×1080 screenshot the boxes and click marks lined up, but no live weapon scan has been run |
 | Exports                                 | Partly tested                   | Field names and set keys compared against Genshin Optimizer's schema and key list. Imports into the sites aren't covered by the test suite                                                                        |
 | Reference data                          | Tested                          | 297 of 299 artifact pieces match Genshin Optimizer's data; the other 2 have aliases                                                                                                                               |
 | Win32 capture and input                 | Tested on the real game         | Used by the live scans above, and `make test` runs the capture and input structure tests                                                                                                                          |
@@ -318,7 +318,7 @@ Reads weapons from the Weapons tab of the inventory. Open that tab first, then r
 
 Each weapon gets a key, level, ascension, refinement, lock state and equipped character. The level is read as "level/cap", and the cap gives the ascension. The rarity comes from the colour of the name banner and only decides which weapons stay in the report.
 
-**The weapon screen hasn't been checked against the real game.** Its boxes were converted from Inventory Kamera's, and the grid is assumed to match the artifact one. Run `calibrate --screen weapons` with the weapon panel showing, and fix any box that is off with `--layout`. Try `--limit 10` before a full scan.
+**The weapon scan has only had a calibration check so far.** On one 1920×1080 screenshot every box read its text correctly and the click marks sat on the item cards, but no full live scan has been run. Run `calibrate --screen weapons` with the weapon panel showing, and fix any box that is off with `--layout`. Try `--limit 10` before a full scan.
 
 ### `achievements`
 
