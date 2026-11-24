@@ -34,13 +34,35 @@ func (r *WeaponRecord) issue(format string, args ...any) {
 	r.Issues = append(r.Issues, fmt.Sprintf(format, args...))
 }
 
+// RawCharacterText preserves what OCR read, for diagnosing bad results.
+type RawCharacterText struct {
+	Header  string   `json:"header"`
+	Level   string   `json:"level"`
+	Talents []string `json:"talents,omitempty"`
+}
+
 // CharacterRecord is the result of scanning one character.
 type CharacterRecord struct {
 	Index     int            `json:"index"`
 	Source    string         `json:"source"`
 	Character game.Character `json:"character"`
+	// Element is the element shown beside the name. For the Traveler it is part of
+	// the key.
+	Element string `json:"element,omitempty"`
 	// Issues are problems that may make the character wrong.
 	Issues []string `json:"issues,omitempty"`
+	// Notes are corrections and other things worth knowing that don't make the
+	// character wrong.
+	Notes []string         `json:"notes,omitempty"`
+	Raw   RawCharacterText `json:"raw"`
+}
+
+func (r *CharacterRecord) issue(format string, args ...any) {
+	r.Issues = append(r.Issues, fmt.Sprintf(format, args...))
+}
+
+func (r *CharacterRecord) note(format string, args ...any) {
+	r.Notes = append(r.Notes, fmt.Sprintf(format, args...))
 }
 
 // MaterialRecord is the stack size of one inventory material.
