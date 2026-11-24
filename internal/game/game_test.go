@@ -180,3 +180,39 @@ func TestWeaponAndCharacterValidate(t *testing.T) {
 		t.Error("impossible character accepted")
 	}
 }
+
+func TestTalentsWithoutBoosts(t *testing.T) {
+	shown := Talents{Auto: 10, Skill: 13, Burst: 13}
+	tests := []struct {
+		constellation int
+		c3, c5        TalentKind
+		want          Talents
+	}{
+		{0, TalentSkill, TalentBurst, Talents{10, 13, 13}},
+		{2, TalentSkill, TalentBurst, Talents{10, 13, 13}},
+		{3, TalentSkill, TalentBurst, Talents{10, 10, 13}},
+		{3, TalentBurst, TalentSkill, Talents{10, 13, 10}},
+		{4, TalentBurst, TalentSkill, Talents{10, 13, 10}},
+		{5, TalentSkill, TalentBurst, Talents{10, 10, 10}},
+		{6, TalentAuto, TalentBurst, Talents{7, 13, 10}},
+		{5, TalentAuto, TalentSkill, Talents{7, 10, 13}},
+		{3, "", "", Talents{10, 13, 13}},
+	}
+	for _, tt := range tests {
+		if got := shown.WithoutBoosts(tt.constellation, tt.c3, tt.c5); got != tt.want {
+			t.Errorf("C%d %s/%s: got %+v, want %+v", tt.constellation, tt.c3, tt.c5, got, tt.want)
+		}
+	}
+}
+
+func TestTravelerKeys(t *testing.T) {
+	if got := TravelerKey("Anemo"); got != "TravelerAnemo" || !got.IsTraveler() {
+		t.Errorf("TravelerKey(Anemo) = %q", got)
+	}
+	if CharacterKey("HuTao").IsTraveler() {
+		t.Error("Hu Tao is not the Traveler")
+	}
+	if len(TravelerElements()) != 7 {
+		t.Errorf("elements = %v", TravelerElements())
+	}
+}
