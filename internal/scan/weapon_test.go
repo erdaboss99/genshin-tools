@@ -1,6 +1,7 @@
 package scan
 
 import (
+	"context"
 	"image"
 	"image/color"
 	"image/draw"
@@ -128,5 +129,28 @@ func TestWeaponRarity(t *testing.T) {
 	}
 	if got := weaponRarity(color.RGBA{185, 110, 55, 255}); got != 5 {
 		t.Errorf("a near 5-star colour gave %d", got)
+	}
+}
+
+func TestScanWeaponsNotesRepeatsWithoutIssues(t *testing.T) {
+	frame := weaponFrame(t, nameplateColors[3].color)
+	source := func(ctx context.Context, emit EmitFrame) error {
+		if err := emit(Frame{Index: 0, Source: "a", Image: frame}); err != nil {
+			return err
+		}
+		return emit(Frame{Index: 1, Source: "b", Image: frame, Duplicate: true})
+	}
+	replies := []string{"Dull Blade", "Lv. 1/20", "1", "", "Dull Blade", "Lv. 1/20", "1", ""}
+	records, err := ScanWeapons(t.Context(), source, weaponParser(replies...), ScanOptions{Workers: 1})
+	if err != nil || len(records) != 2 {
+		t.Fatalf("records = %d, err = %v", len(records), err)
+	}
+	if len(records[0].Notes) != 0 || !slices.Equal(records[1].Notes, []string{RepeatNote}) {
+		t.Errorf("notes = %v and %v", records[0].Notes, records[1].Notes)
+	}
+	for _, r := range records {
+		if len(r.Issues) != 0 {
+			t.Errorf("record %d has issues %v", r.Index, r.Issues)
+		}
 	}
 }

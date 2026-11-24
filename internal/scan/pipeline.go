@@ -50,13 +50,18 @@ func ScanWeapons(ctx context.Context, source FrameSource, parser WeaponParser, o
 		parse: parser.Parse,
 		annotate: func(r *WeaponRecord, frame Frame, source string) {
 			r.Index, r.Source = frame.Index, source
+			// Unlike artifacts, weapons come in stacks of identical copies, which
+			// look the same as a missed click, so a repeat is only noted.
 			if frame.Duplicate {
-				r.issue(duplicateFrameIssue)
+				r.Notes = append(r.Notes, RepeatNote)
 			}
 		},
 		index: func(r WeaponRecord) int { return r.Index },
 	})
 }
+
+// RepeatNote marks a weapon whose panel was identical to the previous one's.
+const RepeatNote = "identical to the previous weapon: another copy, or a click that didn't register"
 
 const duplicateFrameIssue = "identical to the previous frame: the click may not have registered"
 

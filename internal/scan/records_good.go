@@ -23,8 +23,11 @@ type WeaponRecord struct {
 	// of GOOD and only decides which weapons the report keeps.
 	Rarity game.Rarity `json:"rarity,omitempty"`
 	// Issues are problems that may make the weapon wrong.
-	Issues []string      `json:"issues,omitempty"`
-	Raw    RawWeaponText `json:"raw"`
+	Issues []string `json:"issues,omitempty"`
+	// Notes are things worth knowing that don't make the weapon wrong. A weapon that
+	// repeats the previous one is usually another copy of the same weapon.
+	Notes []string      `json:"notes,omitempty"`
+	Raw   RawWeaponText `json:"raw"`
 }
 
 func (r *WeaponRecord) issue(format string, args ...any) {
