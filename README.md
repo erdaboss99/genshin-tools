@@ -335,6 +335,15 @@ Use `-i` and `-o` to change the paths. `--merge` takes the site's own export and
 
 Artifacts with scan issues are left out by default, because an otherwise valid artifact could be missing a substat. Artifacts that break the game's rules are never exported, even with `--include-issues`, because importers would silently fill bad fields with defaults.
 
+### `extract paimon`
+
+Builds an `achievements.json` report from a Paimon.moe export, so you don't need to scan. Use `-i` to choose the export (default `paimon.json`) and `-o` for the report (default `achievements.json`). `--list` prints the completed achievements instead. Stages the name list doesn't know are kept by ID, so run `update-data` after a game patch.
+
+```powershell
+.\gensin-scan.exe extract paimon -i paimon-moe-data.json
+.\gensin-scan.exe export seelie
+```
+
 ### Setup commands
 
 | Command                | Purpose                                                                                                                                 |

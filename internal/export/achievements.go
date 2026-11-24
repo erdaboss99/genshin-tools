@@ -1,8 +1,11 @@
 package export
 
 import (
+	"cmp"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 
 	"github.com/erdaboss99/gensin-tools/internal/game"
@@ -64,4 +67,38 @@ func mergeInto[T any](existing []byte, key string, value T) ([]byte, error) {
 	}
 	doc[key] = raw
 	return json.MarshalIndent(doc, "", "  ")
+}
+
+// ReadPaimonMoe extracts the completed achievements from a Paimon.moe export. Entries
+// marked false are skipped. The result is sorted by category, then ID.
+func ReadPaimonMoe(raw []byte) ([]game.CompletedAchievement, error) {
+	var doc struct {
+		Achievement paimonAchievements `json:"achievement"`
+	}
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		return nil, fmt.Errorf("parse Paimon.moe export: %w", err)
+	}
+	if doc.Achievement == nil {
+		return nil, errors.New("no \"achievement\" section in this Paimon.moe export")
+	}
+	var completed []game.CompletedAchievement
+	for categoryKey, ids := range doc.Achievement {
+		category, err := strconv.Atoi(categoryKey)
+		if err != nil {
+			return nil, fmt.Errorf("achievement category %q is not a number", categoryKey)
+		}
+		for idKey, done := range ids {
+			id, err := strconv.Atoi(idKey)
+			if err != nil {
+				return nil, fmt.Errorf("achievement ID %q is not a number", idKey)
+			}
+			if done {
+				completed = append(completed, game.CompletedAchievement{ID: game.AchievementID(id), Category: game.CategoryID(category)})
+			}
+		}
+	}
+	slices.SortFunc(completed, func(a, b game.CompletedAchievement) int {
+		return cmp.Or(cmp.Compare(a.Category, b.Category), cmp.Compare(a.ID, b.ID))
+	})
+	return completed, nil
 }

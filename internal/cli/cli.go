@@ -23,6 +23,9 @@ Exporting:
   export paimon  Convert an achievement scan to Paimon.moe
   export seelie  Convert an achievement scan to Seelie.me
 
+Importing:
+  extract paimon  Turn a Paimon.moe export into achievements.json
+
 Setup:
   doctor        Check that everything needed for scanning is in place
   calibrate     Draw the scan regions on a screenshot and show what OCR reads
@@ -78,6 +81,8 @@ func (a *app) dispatch(ctx context.Context, args []string) error {
 		return a.runAchievements(ctx, rest)
 	case "export":
 		return a.runExport(rest)
+	case "extract":
+		return a.runExtract(rest)
 	case "doctor":
 		return a.runDoctor(ctx, rest)
 	case "calibrate":

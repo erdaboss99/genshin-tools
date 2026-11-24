@@ -94,3 +94,26 @@ func TestMergeRejectsCorruptExisting(t *testing.T) {
 		t.Error("corrupt merge input accepted")
 	}
 }
+
+func TestReadPaimonMoe(t *testing.T) {
+	raw := []byte(`{"achievement":{"4":{"81000":true},"0":{"80127":true,"80091":true,"80092":false}},"wish-counter":{}}`)
+	got, err := ReadPaimonMoe(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []game.CompletedAchievement{{ID: 80091, Category: 0}, {ID: 80127, Category: 0}, {ID: 81000, Category: 4}}
+	if len(got) != len(want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("got %v, want %v", got, want)
+		}
+	}
+	if _, err := ReadPaimonMoe([]byte(`{"wish-counter":{}}`)); err == nil {
+		t.Error("an export without achievements must be rejected")
+	}
+	if _, err := ReadPaimonMoe([]byte(`{"achievement":{"x":{}}}`)); err == nil {
+		t.Error("a non-numeric category must be rejected")
+	}
+}
