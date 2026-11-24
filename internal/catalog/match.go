@@ -25,6 +25,12 @@ func (c *Catalog) MatchCharacter(text string) (fuzzy.Match[string], bool) {
 	return fuzzy.Best(text, c.Characters, fuzzy.Identity, minCharacterScore)
 }
 
+// BoostsFor returns the constellation boosts of a character by display name.
+func (c *Catalog) BoostsFor(name string) (ConstellationBoosts, bool) {
+	boosts, ok := c.Boosts[name]
+	return boosts, ok
+}
+
 // MatchWeapon finds the weapon named by OCR text.
 func (c *Catalog) MatchWeapon(text string) (fuzzy.Match[string], bool) {
 	return fuzzy.Best(text, c.Weapons, fuzzy.Identity, minWeaponScore)

@@ -7,8 +7,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -140,17 +142,128 @@ func wikiList(ctx context.Context, client *http.Client, src Source, menu string)
 	}
 }
 
-func fetchCharacters(ctx context.Context, client *http.Client, src Source) ([]string, error) {
+func fetchCharacters(ctx context.Context, client *http.Client, src Source) ([]string, map[string]ConstellationBoosts, error) {
 	items, err := wikiList(ctx, client, src, wikiMenuCharacters)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	names := []string{travelerName}
+	boosts := make(map[string]ConstellationBoosts, len(items))
 	for _, item := range items {
-		names = append(names, strings.TrimSpace(item.Name))
+		name := strings.TrimSpace(item.Name)
+		names = append(names, name)
+		page, err := fetchCharacterPage(ctx, client, src, item.ID)
+		if err != nil {
+			return nil, nil, fmt.Errorf("character %q: %w", name, err)
+		}
+		if b, ok := page.boosts(); ok {
+			boosts[name] = b
+		}
 	}
 	slices.Sort(names)
-	return slices.Compact(names), nil
+	return slices.Compact(names), boosts, nil
+}
+
+// wikiCharacter holds the parts of a character page that the boosts come from.
+type wikiCharacter struct {
+	// talents are the talent titles in page order: the normal attack, the skill, an
+	// alternate sprint for a few characters, then the burst, then the passives.
+	talents []string
+	// constellations are the constellation descriptions, in order.
+	constellations []string
+}
+
+type wikiTalentList struct {
+	List []struct {
+		Title string `json:"title"`
+	} `json:"list"`
+}
+
+type wikiSummaryList struct {
+	List []struct {
+		Desc string `json:"desc"`
+	} `json:"list"`
+}
+
+const (
+	wikiTalentComponent        = "talent"
+	wikiConstellationComponent = "summaryList"
+	// Constellations 3 and 5 raise talent levels, at these positions.
+	wikiC3, wikiC5 = 2, 4
+)
+
+var htmlTag = regexp.MustCompile(`<[^>]*>`)
+
+func fetchCharacterPage(ctx context.Context, client *http.Client, src Source, id string) (wikiCharacter, error) {
+	var page wikiCharacter
+	req, err := wikiRequest(ctx, http.MethodGet, src.WikiEntryURL+"?entry_page_id="+id, nil)
+	if err != nil {
+		return page, err
+	}
+	var resp wikiEntryResponse
+	if err := doJSON(client, req, &resp); err != nil {
+		return page, err
+	}
+	for _, module := range resp.Data.Page.Modules {
+		for _, component := range module.Components {
+			// Characters that aren't out yet have pages whose components are empty.
+			if strings.TrimSpace(component.Data) == "" {
+				continue
+			}
+			switch component.ID {
+			case wikiTalentComponent:
+				var talents wikiTalentList
+				if err := json.Unmarshal([]byte(component.Data), &talents); err != nil {
+					return page, fmt.Errorf("%s: %w", wikiTalentComponent, err)
+				}
+				for _, t := range talents.List {
+					page.talents = append(page.talents, strings.TrimSpace(t.Title))
+				}
+			case wikiConstellationComponent:
+				var list wikiSummaryList
+				if err := json.Unmarshal([]byte(component.Data), &list); err != nil {
+					return page, fmt.Errorf("%s: %w", wikiConstellationComponent, err)
+				}
+				for _, c := range list.List {
+					page.constellations = append(page.constellations, html.UnescapeString(htmlTag.ReplaceAllString(c.Desc, "")))
+				}
+			}
+		}
+	}
+	return page, nil
+}
+
+// boosts works out what constellations 3 and 5 raise. Their descriptions name the
+// talent, and the page's talent order says which one it is: the normal attack is
+// first, the skill second, and the burst third or, for characters with an alternate
+// sprint, fourth. Names are compared ignoring case, as the wiki isn't consistent.
+func (p wikiCharacter) boosts() (ConstellationBoosts, bool) {
+	if len(p.talents) < 4 || len(p.constellations) <= wikiC5 {
+		return ConstellationBoosts{}, false
+	}
+	candidates := []struct{ kind, title string }{
+		{TalentAuto, p.talents[0]}, {TalentSkill, p.talents[1]}, {TalentBurst, p.talents[2]}, {TalentBurst, p.talents[3]},
+	}
+	kind := func(desc string) string {
+		desc = strings.ToLower(desc)
+		if !strings.Contains(desc, "level of") {
+			return ""
+		}
+		// The longest matching title wins, in case one title contains another.
+		best, bestLen := "", 0
+		for _, c := range candidates {
+			title := strings.ToLower(c.title)
+			if title != "" && strings.Contains(desc, title) && len(title) > bestLen {
+				best, bestLen = c.kind, len(title)
+			}
+		}
+		return best
+	}
+	b := ConstellationBoosts{C3: kind(p.constellations[wikiC3]), C5: kind(p.constellations[wikiC5])}
+	if b.C3 == "" || b.C5 == "" || b.C3 == b.C5 {
+		return ConstellationBoosts{}, false
+	}
+	return b, true
 }
 
 func fetchWeapons(ctx context.Context, client *http.Client, src Source) ([]string, error) {

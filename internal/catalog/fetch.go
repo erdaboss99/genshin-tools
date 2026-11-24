@@ -40,7 +40,7 @@ func Fetch(ctx context.Context, client *http.Client, src Source) (Data, error) {
 	if err != nil {
 		return Data{}, fmt.Errorf("artifacts: %w", err)
 	}
-	characters, err := fetchCharacters(ctx, client, src)
+	characters, boosts, err := fetchCharacters(ctx, client, src)
 	if err != nil {
 		return Data{}, fmt.Errorf("characters: %w", err)
 	}
@@ -52,7 +52,7 @@ func Fetch(ctx context.Context, client *http.Client, src Source) (Data, error) {
 	if err != nil {
 		return Data{}, fmt.Errorf("achievements: %w", err)
 	}
-	return Data{Pieces: pieces, Characters: characters, Weapons: weapons, Achievements: achievements}, nil
+	return Data{Pieces: pieces, Characters: characters, Boosts: boosts, Weapons: weapons, Achievements: achievements}, nil
 }
 
 func doJSON[T any](client *http.Client, req *http.Request, out *T) error {

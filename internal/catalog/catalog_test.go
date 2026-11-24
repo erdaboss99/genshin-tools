@@ -19,7 +19,7 @@ func TestEmbeddedSnapshotIsUsable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(c.Pieces) < 250 || len(c.Characters) < 100 || len(c.Weapons) < 200 || len(c.Achievements) < 1000 {
+	if len(c.Pieces) < 250 || len(c.Characters) < 100 || len(c.Boosts) < 100 || len(c.Weapons) < 200 || len(c.Achievements) < 1000 {
 		t.Fatalf("snapshot looks truncated: %d pieces, %d characters, %d achievements",
 			len(c.Pieces), len(c.Characters), len(c.Achievements))
 	}
@@ -165,6 +165,15 @@ func TestFetch(t *testing.T) {
 	mux.HandleFunc("GET /entry", func(w http.ResponseWriter, r *http.Request) {
 		var pieces string
 		switch r.URL.Query().Get("entry_page_id") {
+		case "c1":
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"page": map[string]any{"modules": []any{
+				map[string]any{"components": []any{
+					map[string]any{"component_id": "talent", "data": `{"list":[{"title":"Attack"},{"title":"Guide to Afterlife"},{"title":"Spirit Soother"},{"title":"Flutter By"}]}`},
+					map[string]any{"component_id": "summaryList", "data": `{"list":[{"desc":"a"},{"desc":"b"},{"desc":"Increases the <span>level of</span> guide to afterlife by 3."},{"desc":"d"},{"desc":"Increases the Level of Spirit Soother by 3."},{"desc":"f"}]}`},
+					map[string]any{"component_id": "talent_empty", "data": ""},
+				}},
+			}}}})
+			return
 		case "10":
 			pieces = `{"flower_of_life":{"title":"Myths of the Night Realm","position":"Flower of Life"},"sands_of_eon":{"title":"Myths of the Night Realm","position":"Sands of Eon"}}`
 		case "11":
@@ -199,6 +208,9 @@ func TestFetch(t *testing.T) {
 	if !slices.Equal(data.Characters, []string{"Hu Tao", "Traveler"}) {
 		t.Errorf("Characters = %v", data.Characters)
 	}
+	if want := (ConstellationBoosts{C3: TalentSkill, C5: TalentBurst}); data.Boosts["Hu Tao"] != want || len(data.Boosts) != 1 {
+		t.Errorf("Boosts = %+v, want only Hu Tao = %+v", data.Boosts, want)
+	}
 	if !slices.Equal(data.Weapons, []string{"Amos' Bow", "Mistsplitter Reforged"}) {
 		t.Errorf("Weapons = %v", data.Weapons)
 	}
@@ -228,5 +240,54 @@ func TestFetchReportsServerErrors(t *testing.T) {
 	_, err := Fetch(t.Context(), srv.Client(), Source{srv.URL, srv.URL, srv.URL})
 	if err == nil || !regexp.MustCompile(`502`).MatchString(err.Error()) {
 		t.Errorf("err = %v, want a 502 error", err)
+	}
+}
+
+func TestConstellationBoosts(t *testing.T) {
+	tests := []struct {
+		name  string
+		page  wikiCharacter
+		want  ConstellationBoosts
+		found bool
+	}{
+		{"skill then burst", wikiCharacter{
+			talents:        []string{"Attack", "Skill Name", "Burst Name", "Sprint", "Passive"},
+			constellations: []string{"", "", "Increases the Level of Skill Name by 3.", "", "Increases the Level of Burst Name by 3.", ""},
+		}, ConstellationBoosts{TalentSkill, TalentBurst}, true},
+		{"alternate sprint puts the burst fourth", wikiCharacter{
+			talents:        []string{"Attack", "Skill Name", "Alt Sprint", "Burst Name", "Passive"},
+			constellations: []string{"", "", "Increases the Level of Burst Name by 3.", "", "Increases the Level of Skill Name by 3.", ""},
+		}, ConstellationBoosts{TalentBurst, TalentSkill}, true},
+		{"normal attack and different case", wikiCharacter{
+			talents:        []string{"Attack Name ", "Skill Name", "Burst Name", "Passive", "Passive 2"},
+			constellations: []string{"", "", "Increases the level of Normal Attack: attack name by 3.", "", "Increases the Level of BURST NAME by 3.", ""},
+		}, ConstellationBoosts{TalentAuto, TalentBurst}, true},
+		{"no level boosts", wikiCharacter{
+			talents:        []string{"Attack", "Skill Name", "Burst Name", "Passive"},
+			constellations: []string{"", "", "Gains an effect.", "", "Gains another effect.", ""},
+		}, ConstellationBoosts{}, false},
+		{"both boost the same talent", wikiCharacter{
+			talents:        []string{"Attack", "Skill Name", "Burst Name", "Passive"},
+			constellations: []string{"", "", "Increases the Level of Skill Name by 3.", "", "Increases the Level of Skill Name by 3.", ""},
+		}, ConstellationBoosts{}, false},
+		{"page with no data", wikiCharacter{}, ConstellationBoosts{}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, found := tt.page.boosts()
+			if got != tt.want || found != tt.found {
+				t.Errorf("boosts() = %+v, %v; want %+v, %v", got, found, tt.want, tt.found)
+			}
+		})
+	}
+}
+
+func TestBoostsFor(t *testing.T) {
+	c := New(Data{Boosts: map[string]ConstellationBoosts{"Hu Tao": {C3: TalentSkill, C5: TalentBurst}}})
+	if b, ok := c.BoostsFor("Hu Tao"); !ok || b.C3 != TalentSkill {
+		t.Errorf("BoostsFor(Hu Tao) = %+v, %v", b, ok)
+	}
+	if _, ok := c.BoostsFor("Traveler"); ok {
+		t.Error("an unknown character must report no boosts")
 	}
 }

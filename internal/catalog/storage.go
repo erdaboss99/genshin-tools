@@ -17,6 +17,7 @@ const (
 	piecesFile       = "artifacts.json"
 	charactersFile   = "characters.json"
 	weaponsFile      = "weapons.json"
+	boostsFile       = "constellations.json"
 	achievementsFile = "achievements.json"
 )
 
@@ -37,6 +38,9 @@ func Load(dir string) (*Catalog, error) {
 		return nil, err
 	}
 	if err := readData(dir, charactersFile, &data.Characters); err != nil {
+		return nil, err
+	}
+	if err := readData(dir, boostsFile, &data.Boosts); err != nil {
 		return nil, err
 	}
 	if err := readData(dir, weaponsFile, &data.Weapons); err != nil {
@@ -75,6 +79,7 @@ func Save(dir string, data Data) error {
 		writeData(dir, piecesFile, data.Pieces),
 		writeData(dir, charactersFile, data.Characters),
 		writeData(dir, weaponsFile, data.Weapons),
+		writeData(dir, boostsFile, data.Boosts),
 		writeData(dir, achievementsFile, data.Achievements),
 	)
 }
