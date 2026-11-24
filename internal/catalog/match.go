@@ -11,6 +11,7 @@ import (
 const (
 	minPieceScore       = 70
 	minCharacterScore   = 75
+	minWeaponScore      = 70
 	minAchievementScore = 85
 )
 
@@ -22,6 +23,11 @@ func (c *Catalog) MatchPiece(text string) (fuzzy.Match[Piece], bool) {
 // MatchCharacter finds the character named by OCR text.
 func (c *Catalog) MatchCharacter(text string) (fuzzy.Match[string], bool) {
 	return fuzzy.Best(text, c.Characters, fuzzy.Identity, minCharacterScore)
+}
+
+// MatchWeapon finds the weapon named by OCR text.
+func (c *Catalog) MatchWeapon(text string) (fuzzy.Match[string], bool) {
+	return fuzzy.Best(text, c.Weapons, fuzzy.Identity, minWeaponScore)
 }
 
 // MatchAchievement finds the achievement named by OCR text.

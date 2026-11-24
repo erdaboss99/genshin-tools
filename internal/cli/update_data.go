@@ -29,7 +29,7 @@ func (a *app) runUpdateData(ctx context.Context, args []string) error {
 	if err := catalog.Save(dir, data); err != nil {
 		return err
 	}
-	fmt.Fprintf(a.stdout, "Saved %d artifact pieces, %d characters and %d achievements to %s\n",
-		len(data.Pieces), len(data.Characters), len(data.Achievements), dir)
+	fmt.Fprintf(a.stdout, "Saved %d artifact pieces, %d characters, %d weapons and %d achievements to %s\n",
+		len(data.Pieces), len(data.Characters), len(data.Weapons), len(data.Achievements), dir)
 	return nil
 }

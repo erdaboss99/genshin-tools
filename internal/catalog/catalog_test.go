@@ -19,7 +19,7 @@ func TestEmbeddedSnapshotIsUsable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(c.Pieces) < 250 || len(c.Characters) < 100 || len(c.Achievements) < 1000 {
+	if len(c.Pieces) < 250 || len(c.Characters) < 100 || len(c.Weapons) < 200 || len(c.Achievements) < 1000 {
 		t.Fatalf("snapshot looks truncated: %d pieces, %d characters, %d achievements",
 			len(c.Pieces), len(c.Characters), len(c.Achievements))
 	}
@@ -150,6 +150,11 @@ func TestFetch(t *testing.T) {
 		case body.Menu == wikiMenuCharacters && body.Page == 1:
 			list = append(list, map[string]string{"entry_page_id": "c1", "name": "Hu Tao"})
 			total = "1"
+		case body.Menu == wikiMenuWeapons && body.Page == 1:
+			list = append(list,
+				map[string]string{"entry_page_id": "w1", "name": " Mistsplitter Reforged"},
+				map[string]string{"entry_page_id": "w2", "name": "Amos' Bow"})
+			total = "2"
 		case body.Menu == wikiMenuArtifacts && body.Page == 1:
 			list = append(list, map[string]string{"entry_page_id": "10", "name": "Obsidian Codex "})
 		case body.Menu == wikiMenuArtifacts && body.Page == 2:
@@ -193,6 +198,9 @@ func TestFetch(t *testing.T) {
 	}
 	if !slices.Equal(data.Characters, []string{"Hu Tao", "Traveler"}) {
 		t.Errorf("Characters = %v", data.Characters)
+	}
+	if !slices.Equal(data.Weapons, []string{"Amos' Bow", "Mistsplitter Reforged"}) {
+		t.Errorf("Weapons = %v", data.Weapons)
 	}
 	if len(data.Achievements) != 2 || data.Achievements[0].Name != "Tiered" ||
 		!slices.Equal(data.Achievements[0].IDs, []game.AchievementID{1, 2}) || data.Achievements[1].Category != 5 {

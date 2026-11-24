@@ -44,11 +44,15 @@ func Fetch(ctx context.Context, client *http.Client, src Source) (Data, error) {
 	if err != nil {
 		return Data{}, fmt.Errorf("characters: %w", err)
 	}
+	weapons, err := fetchWeapons(ctx, client, src)
+	if err != nil {
+		return Data{}, fmt.Errorf("weapons: %w", err)
+	}
 	achievements, err := fetchAchievements(ctx, client, src)
 	if err != nil {
 		return Data{}, fmt.Errorf("achievements: %w", err)
 	}
-	return Data{Pieces: pieces, Characters: characters, Achievements: achievements}, nil
+	return Data{Pieces: pieces, Characters: characters, Weapons: weapons, Achievements: achievements}, nil
 }
 
 func doJSON[T any](client *http.Client, req *http.Request, out *T) error {

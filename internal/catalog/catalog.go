@@ -27,6 +27,7 @@ type Achievement struct {
 type Data struct {
 	Pieces       []Piece
 	Characters   []string
+	Weapons      []string
 	Achievements []Achievement
 }
 

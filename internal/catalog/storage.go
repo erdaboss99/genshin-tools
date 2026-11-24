@@ -16,6 +16,7 @@ var embedded embed.FS
 const (
 	piecesFile       = "artifacts.json"
 	charactersFile   = "characters.json"
+	weaponsFile      = "weapons.json"
 	achievementsFile = "achievements.json"
 )
 
@@ -36,6 +37,9 @@ func Load(dir string) (*Catalog, error) {
 		return nil, err
 	}
 	if err := readData(dir, charactersFile, &data.Characters); err != nil {
+		return nil, err
+	}
+	if err := readData(dir, weaponsFile, &data.Weapons); err != nil {
 		return nil, err
 	}
 	if err := readData(dir, achievementsFile, &data.Achievements); err != nil {
@@ -70,6 +74,7 @@ func Save(dir string, data Data) error {
 	return errors.Join(
 		writeData(dir, piecesFile, data.Pieces),
 		writeData(dir, charactersFile, data.Characters),
+		writeData(dir, weaponsFile, data.Weapons),
 		writeData(dir, achievementsFile, data.Achievements),
 	)
 }

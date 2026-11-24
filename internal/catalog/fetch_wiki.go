@@ -18,6 +18,7 @@ import (
 
 const (
 	wikiMenuCharacters = "2"
+	wikiMenuWeapons    = "4"
 	wikiMenuArtifacts  = "5"
 	wikiPageSize       = 50
 	wikiArtifactList   = "artifact_list"
@@ -147,6 +148,21 @@ func fetchCharacters(ctx context.Context, client *http.Client, src Source) ([]st
 	names := []string{travelerName}
 	for _, item := range items {
 		names = append(names, strings.TrimSpace(item.Name))
+	}
+	slices.Sort(names)
+	return slices.Compact(names), nil
+}
+
+func fetchWeapons(ctx context.Context, client *http.Client, src Source) ([]string, error) {
+	items, err := wikiList(ctx, client, src, wikiMenuWeapons)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(items))
+	for _, item := range items {
+		if name := strings.TrimSpace(item.Name); name != "" {
+			names = append(names, name)
+		}
 	}
 	slices.Sort(names)
 	return slices.Compact(names), nil
