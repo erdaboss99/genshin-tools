@@ -47,14 +47,14 @@
 
 ## Requirements
 
-| Requirement                                                              | Notes                                                                                             |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| Windows 10 or 11                                                         | The only supported platform                                                                       |
-| [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) 4.1 or newer | On Windows: `winget install tesseract-ocr.tesseract`                                              |
-| Go 1.27, plus Make or PowerShell                                         | To build. Use `make` from WSL, or `.\make.ps1` from PowerShell on Windows                         |
-| Game language: English                                                   | Names are matched against English data                                                            |
-| Game window at least 1280 wide, no wider than 16:9                       | Windowed or borderless. Exclusive fullscreen captures as black                                    |
-| No colour filters                                                        | Night Light, ReShade, f.lux and similar will break star detection, which relies on exact colours  |
+| Requirement                                                              | Notes                                                                                            |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Windows 10 or 11                                                         | The only supported platform                                                                      |
+| [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) 4.1 or newer | On Windows: `winget install tesseract-ocr.tesseract`                                             |
+| Go 1.27, plus Make or PowerShell                                         | To build. Use `make` from WSL, or `.\make.ps1` from PowerShell on Windows                        |
+| Game language: English                                                   | Names are matched against English data                                                           |
+| Game window at least 1280 wide, no wider than 16:9                       | Windowed or borderless. Exclusive fullscreen captures as black                                   |
+| No colour filters                                                        | Night Light, ReShade, f.lux and similar will break star detection, which relies on exact colours |
 
 An **Administrator terminal** is required for live scans. The game runs elevated, and Windows silently discards input sent to it from unelevated programs.
 
@@ -306,6 +306,13 @@ equipped     (1008,610)-(1198,635)    "Hu Tao"
 
 On the achievements screen, rows are found from their gold medals, so boxes appear only for rows that were detected. Their `top` and `bottom` values are offsets from the middle of the medal.
 
+Each screen has its own part of the layout: `inventory` for artifacts, `weapons`, `characters` and `achievements`. Pick one with `--screen`:
+
+- **`--screen weapons`** draws the weapon boxes on the Weapons tab, with the weapon panel showing. `nameplate`, `lockIcon` and `equippedBanner` are read by colour, so empty text there is expected.
+- **`--screen characters`** draws the character regions and marks every place the scan clicks. The character screen is three pages, so run it on each, with its own `-o` because `calibration.png` is overwritten every time: the attributes page (`header` and `level`), a constellation page (`activate`, the white button on a locked one), and the talents page (the four `talent` boxes, where the fourth is where Mona and Ayaka have their burst). `activate` and the blue talent test are read by colour.
+
+`capture -o file` saves a clean screenshot with nothing drawn on it, which is better than `calibration.png` for judging how well OCR reads a region, because the outlines sit on the text.
+
 To change a region:
 
 ```powershell
@@ -343,7 +350,7 @@ Tip: run a real scan once with `--save-frames frames`. Then you can experiment w
 
 ### `weapons`
 
-Reads weapons from the Weapons tab of the inventory. Open that tab first, then run it. It takes the same flags as `artifacts`, except that `--min-rarity` defaults to `3` and `--traveler-name` applies to equipped weapons. The report is `weapons.json` by default.
+Reads weapons from the Weapons tab of the inventory. Open that tab first, then run it. It takes the same flags as `artifacts`, including `--from-dir` and `--save-frames`, except that `--min-rarity` defaults to `3` and `--traveler-name` applies to equipped weapons. The report is `weapons.json` by default.
 
 ```powershell
 .\gensin-scan.exe weapons --limit 10
@@ -353,7 +360,7 @@ Reads weapons from the Weapons tab of the inventory. Open that tab first, then r
 
 Each weapon gets a key, level, ascension, refinement, lock state and equipped character. The level is read as "level/cap", and the cap gives the ascension. The rarity comes from the colour of the name banner and decides which weapons stay in the report. One and two star weapons can't be refined, so their refinement is 1. A weapon only counts as equipped when the cream "Equipped" strip is showing, and if it names someone the catalog doesn't know, the weapon gets an `issues` entry. That is usually the Traveler, whose name is your own, so pass `--traveler-name` as you do for `artifacts` and `characters`.
 
-**The weapon scan was checked on a full run of 52 weapons**, by comparing the report with a screenshot of each one. Try `--limit 10` first on a larger inventory, and use `calibrate --screen weapons` if a box is off.
+A weapon that repeats the one before it gets a note, not an issue, because stacks of identical copies look the same as a missed click, and the scan can't tell them apart. It was checked on a full run of 52 weapons. Try `--limit 10` first on a larger inventory, and use `calibrate --screen weapons` if a box is off.
 
 ### `characters`
 
@@ -365,22 +372,22 @@ Reads every character from the character screen. Press `C` to open it with any c
 .\gensin-scan.exe export good
 ```
 
-| Flag              | Default           | Purpose                                                       |
-| ----------------- | ----------------- | ------------------------------------------------------------- |
-| `-o`              | `characters.json` | Report file                                                   |
-| `--traveler-name` |                   | Your in-game name, which the game shows instead of "Traveler" |
-| `--limit`         | `0` (all)         | Stop after this many characters                               |
+| Flag              | Default           | Purpose                                                                                                      |
+| ----------------- | ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| `-o`              | `characters.json` | Report file                                                                                                  |
+| `--traveler-name` |                   | Your in-game name, which the game shows instead of "Traveler"                                                |
+| `--limit`         | `0` (all)         | Stop after this many characters                                                                              |
 | `--save-frames`   |                   | Save a screenshot of each page read, to check the results against. Each is about 1.7 MB, three per character |
-| `--pace`          | `1`               | Multiplier for delays. Raise it if screens get missed         |
-| `--countdown`     | `5s`              | Delay before the scan starts                                  |
+| `--pace`          | `1`               | Multiplier for delays. Raise it if screens get missed                                                        |
+| `--countdown`     | `5s`              | Delay before the scan starts                                                                                 |
 
-The game shows talent levels with constellation bonuses added, and GOOD wants them without. Constellations 3 and 5 each raise one talent by 3 levels, and the game draws a raised level in light blue. The scan reads all three levels from the talents page and takes 3 off each blue one, which also works for the Traveler. It checks that against the constellation data from HoYoWiki, which `update-data` refreshes. That data says which talent each constellation raises, and a few characters (such as Neuvillette and Lyney) have the normal attack instead of the skill or burst. If the blue talents don't match the constellation or the data, the character gets an `issues` entry rather than a guess. Tartaglia's passive adds a normal attack level to the first four characters, and the scan takes it off.
+The game shows talent levels with constellation bonuses added, and GOOD wants them without. Constellations 3 and 5 each raise one talent by 3 levels, and the game draws a raised level in light blue. The scan reads all three levels from the talents page and takes 3 off each blue one, which also works for the Traveler. It checks that against the constellation data from HoYoWiki, which `update-data` refreshes. That data says which talent each constellation raises, and a few characters (such as Neuvillette and Lyney) have the normal attack instead of the skill or burst. If the blue talents don't match the constellation or the data, the character gets an `issues` entry rather than a guess. Tartaglia's passive adds a normal attack level to the first four characters, and the scan takes it off, assuming those four are the party.
 
 The Traveler's key includes their element, such as `TravelerAnemo`, which is how GOOD names them. The game shows your own name for the Traveler, so pass it with `--traveler-name`, or that character is reported as unreadable.
 
-Each field is read until two reads in a row agree, because a page that is still fading in can give a wrong but believable number once. A field that never settles gets an `issues` entry, as does a talent above level 10 once the bonuses are taken off.
+Each field is read until the same value has come up twice, because a page that is still fading in can give a wrong but believable number once, such as an extra digit. A field that never settles gets an `issues` entry, as does a talent above level 10 once the bonuses are taken off. `--save-frames` keeps three screenshots per character, named by position and key, such as `001-Aino-talents.png`, and the position matches the report's `index`.
 
-**The character scan has been calibrated, but not run end to end.** On clean 1920×1080 screenshots of the attributes, constellation and talents pages, the header, level and talent boxes all read correctly, the "Activate" test told locked constellations from unlocked ones, and the blue test picked out exactly the two boosted talents. The clicking through characters hasn't been run on the live game. Try `--limit 3` first, and use `calibrate --screen characters` if a box is off.
+The scan was checked on a full run of 26 characters, with no issues left after screenshots of several were compared with the report. Characters can't be scanned from saved screenshots, because the scan has to click through the pages. Try `--limit 3` first, and use `calibrate --screen characters` if a box is off.
 
 ### `achievements`
 
@@ -402,17 +409,17 @@ Completion comes from two signals. "Completed" means every stage is done, while 
 
 ### `export`
 
-| Command         | Reads               | Writes        | Extra flags                                         |
-| --------------- | ------------------- | ------------- | --------------------------------------------------- |
-| `export good`   | `artifacts.json`, plus `weapons.json`, `characters.json` and `materials.json` when present | `good.json`   | `--include-issues` keeps items with scan issues; `--weapons`, `--characters`, `--materials` choose the other reports |
-| `export paimon` | `achievements.json` | `paimon.json` | `--merge file`                                      |
-| `export seelie` | `achievements.json` | `seelie.json` | `--merge file`                                      |
+| Command         | Reads                                                                                      | Writes        | Extra flags                                                                                                             |
+| --------------- | ------------------------------------------------------------------------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `export good`   | `artifacts.json`, plus `weapons.json`, `characters.json` and `materials.json` when present | `good.json`   | `--include-issues` keeps items with scan issues; `--weapons`, `--characters` and `--materials` choose the other reports |
+| `export paimon` | `achievements.json`                                                                        | `paimon.json` | `--merge file`                                                                                                          |
+| `export seelie` | `achievements.json`                                                                        | `seelie.json` | `--merge file`                                                                                                          |
 
 Use `-i` and `-o` to change the paths. `--merge` takes the site's own export and keeps everything in it, **except achievements, which are replaced**.
 
-`export good` builds one GOOD file from every report it finds, and a section with no report is left out of the file. A report you name with a flag must exist. Weapons, characters and materials are validated against the game's rules (level against ascension, refinement 1 to 5, constellation 0 to 6, talents 1 to 15) and invalid ones are left out. Weapons and characters have scanners, but **materials don't**, so a `materials.json` has to come from elsewhere. Every report uses the same format as the artifact scan, with `weapon`, `character` or `material` records in place of `artifact`.
+`export good` builds one GOOD file from every report it finds, and a section with no report is left out of the file, so you can export after each scan. A report you name with a flag must exist. Weapons, characters and materials are validated against the game's rules (level against ascension, refinement 1 to 5, constellation 0 to 6, talents 1 to 15) and invalid ones are left out, as are those with scan issues unless `--include-issues` is passed. The Traveler is exported as `TravelerAnemo`, `TravelerGeo` and so on, which is how GOOD names them. Weapons and characters have scanners, but **materials don't**, so a `materials.json` has to come from elsewhere. Every report uses the same format as the artifact scan, with `weapon`, `character` or `material` records in place of `artifact`.
 
-Artifacts with scan issues are left out by default, because an otherwise valid artifact could be missing a substat. Artifacts that break the game's rules are never exported, even with `--include-issues`, because importers would silently fill bad fields with defaults.
+Artifacts with scan issues are left out by default, because an otherwise valid artifact could be missing a substat. Items that break the game's rules are never exported, even with `--include-issues`, because importers would silently fill bad fields with defaults.
 
 ### `extract paimon`
 
@@ -425,13 +432,13 @@ Builds an `achievements.json` report from a Paimon.moe export, so you don't need
 
 ### Setup commands
 
-| Command                | Purpose                                                                                                                                 |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `doctor`               | Checks Tesseract, language data, layout, reference data, Administrator rights and the game window                                       |
-| `calibrate`            | See [Calibrating](#calibrating)                                                                                                         |
-| `capture -o file`      | Saves a screenshot of the game window. Doesn't need Administrator rights                                                                |
-| `update-data [-o dir]` | Downloads current names to your user cache, which then overrides the embedded data. Run it after a game patch adds sets or achievements |
-| `version`              | Prints the version                                                                                                                      |
+| Command                | Purpose                                                                                                                                                                                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `doctor`               | Checks Tesseract, language data, layout, reference data, Administrator rights and the game window                                                                                                                                                                         |
+| `calibrate`            | See [Calibrating](#calibrating)                                                                                                                                                                                                                                           |
+| `capture -o file`      | Saves a screenshot of the game window. Doesn't need Administrator rights                                                                                                                                                                                                  |
+| `update-data [-o dir]` | Downloads current names to your user cache, which then overrides the embedded data. Run it after a game patch adds sets, characters, weapons or achievements. It also refreshes the constellation data, so it makes a request per character and takes about half a minute |
+| `version`              | Prints the version                                                                                                                                                                                                                                                        |
 
 OCR commands also accept `--tesseract`, `--tessdata`, `--lang`, `--layout` and `--data-dir`.
 
