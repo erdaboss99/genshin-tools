@@ -1,14 +1,34 @@
 package scan
 
-import "github.com/erdaboss99/gensin-tools/internal/game"
+import (
+	"fmt"
+
+	"github.com/erdaboss99/gensin-tools/internal/game"
+)
+
+// RawWeaponText preserves what OCR read, for diagnosing bad results.
+type RawWeaponText struct {
+	Name       string `json:"name"`
+	Level      string `json:"level"`
+	Refinement string `json:"refinement"`
+	Equipped   string `json:"equipped,omitempty"`
+}
 
 // WeaponRecord is the result of scanning one weapon.
 type WeaponRecord struct {
 	Index  int         `json:"index"`
 	Source string      `json:"source"`
 	Weapon game.Weapon `json:"weapon"`
+	// Rarity is the weapon's star count, read from its name banner. It is not part
+	// of GOOD and only decides which weapons the report keeps.
+	Rarity game.Rarity `json:"rarity,omitempty"`
 	// Issues are problems that may make the weapon wrong.
-	Issues []string `json:"issues,omitempty"`
+	Issues []string      `json:"issues,omitempty"`
+	Raw    RawWeaponText `json:"raw"`
+}
+
+func (r *WeaponRecord) issue(format string, args ...any) {
+	r.Issues = append(r.Issues, fmt.Sprintf(format, args...))
 }
 
 // CharacterRecord is the result of scanning one character.
