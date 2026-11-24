@@ -1,0 +1,506 @@
+{
+  "Aino": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Albedo": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Alhaitham": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Alyosha": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Amber": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Arataki Itto": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Arlecchino": {
+    "c3": "auto",
+    "c5": "burst"
+  },
+  "Baizhu": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Barbara": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Beidou": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Bennett": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Candace": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Charlotte": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Chasca": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Chevreuse": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Chiori": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Chongyun": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Citlali": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Clorinde": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Collei": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Columbina": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Cyno": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Dahlia": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Dehya": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Diluc": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Diona": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Dori": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Durin": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Emilie": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Escoffier": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Eula": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Faruzan": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Fischl": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Flins": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Freminet": {
+    "c3": "auto",
+    "c5": "skill"
+  },
+  "Furina": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Gaming": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Ganyu": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Gorou": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Hu Tao": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Iansan": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Ifa": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Illuga": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Ineffa": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Jahoda": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Jean": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Kachina": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Kaedehara Kazuha": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Kaeya": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Kamisato Ayaka": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Kamisato Ayato": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Kaveh": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Keqing": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Kinich": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Kirara": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Klee": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Kujou Sara": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Kuki Shinobu": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Lan Yan": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Lauma": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Layla": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Lisa": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Lohen": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Lynette": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Lyney": {
+    "c3": "auto",
+    "c5": "burst"
+  },
+  "Mavuika": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Mika": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Mitya": {
+    "c3": "skill",
+    "c5": "auto"
+  },
+  "Mona": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Mualani": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Nahida": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Navia": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Nefer": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Neuvillette": {
+    "c3": "auto",
+    "c5": "burst"
+  },
+  "Nicole": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Nilou": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Ningguang": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Noelle": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Odette": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Ororon": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Prune": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Qiqi": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Raiden Shogun": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Razor": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Rosaria": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Sandrone": {
+    "c3": "auto",
+    "c5": "burst"
+  },
+  "Sangonomiya Kokomi": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Sayu": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Sethos": {
+    "c3": "auto",
+    "c5": "burst"
+  },
+  "Shenhe": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Shikanoin Heizou": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Sigewinne": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Skirk": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Sucrose": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Tartaglia": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Thoma": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Tighnari": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Traveler (Anemo)": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Traveler (Cryo)": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Traveler (Dendro)": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Traveler (Electro)": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Traveler (Geo)": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Traveler (Hydro)": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Traveler (Pyro)": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Valeriy": {
+    "c3": "auto",
+    "c5": "skill"
+  },
+  "Varesa": {
+    "c3": "burst",
+    "c5": "auto"
+  },
+  "Venti": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Vesna": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Vodyanitsa": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Wanderer": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Wriothesley": {
+    "c3": "auto",
+    "c5": "burst"
+  },
+  "Xiangling": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Xianyun": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Xiao": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Xilonen": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Xingqiu": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Xinyan": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Yae Miko": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Yanfei": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Yaoyao": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Yelan": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Yoimiya": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Yumemizuki Mizuki": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Yun Jin": {
+    "c3": "burst",
+    "c5": "skill"
+  },
+  "Zhongli": {
+    "c3": "skill",
+    "c5": "burst"
+  },
+  "Zibai": {
+    "c3": "skill",
+    "c5": "burst"
+  }
+}
