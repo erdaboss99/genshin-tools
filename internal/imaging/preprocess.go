@@ -2,12 +2,21 @@ package imaging
 
 import "image"
 
-// minChannel converts the part of src inside r to 8 bits using each pixel's darkest
-// colour channel. Game text is usually grey, white or dark, while the backgrounds
-// behind low-contrast labels are saturated orange or purple. Saturated colours have
-// a dark channel and neutral ones don't, so this separates text that luminance
-// would blend together.
-func minChannel(src *image.RGBA, r image.Rectangle) *image.Gray {
+// Channel reduces a pixel to the single value that is kept for OCR.
+type Channel func(r, g, b uint8) uint8
+
+// Darkest keeps each pixel's darkest colour channel. Game text is usually grey,
+// white or dark, while the backgrounds behind low-contrast labels are saturated
+// orange or purple. Saturated colours have a dark channel and neutral ones don't,
+// so this separates text that luminance would blend together. It is the default.
+func Darkest(r, g, b uint8) uint8 { return min(r, g, b) }
+
+// Green keeps the green channel. It separates yellow text on an orange or red
+// background, where the darkest channel has almost no contrast.
+func Green(_, g, _ uint8) uint8 { return g }
+
+// channelOf converts the part of src inside r to 8 bits using c.
+func channelOf(src *image.RGBA, r image.Rectangle, c Channel) *image.Gray {
 	r = r.Intersect(src.Bounds())
 	dst := image.NewGray(image.Rect(0, 0, r.Dx(), r.Dy()))
 	for y := range r.Dy() {
@@ -15,7 +24,7 @@ func minChannel(src *image.RGBA, r image.Rectangle) *image.Gray {
 		row := dst.Pix[y*dst.Stride:]
 		for x := range r.Dx() {
 			p := line[x*4 : x*4+3 : x*4+3]
-			row[x] = min(p[0], p[1], p[2])
+			row[x] = c(p[0], p[1], p[2])
 		}
 	}
 	return dst
@@ -41,7 +50,13 @@ func OCRScale(windowWidth int) int {
 // detected from the image, because the panel mixes light-on-dark and
 // dark-on-light text. A region with no contrast comes back uniformly white.
 func PrepareForOCR(src *image.RGBA, r image.Rectangle, scale int) *image.Gray {
-	gray := minChannel(src, r)
+	return PrepareChannelForOCR(src, r, scale, Darkest)
+}
+
+// PrepareChannelForOCR is PrepareForOCR with a choice of colour channel, for text
+// the darkest channel can't separate from its background.
+func PrepareChannelForOCR(src *image.RGBA, r image.Rectangle, scale int, c Channel) *image.Gray {
+	gray := channelOf(src, r, c)
 	if len(gray.Pix) == 0 {
 		return gray
 	}
