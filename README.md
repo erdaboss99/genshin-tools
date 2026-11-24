@@ -815,23 +815,35 @@ The images in `internal/scan/testdata` are **synthetic mock-ups** drawn by `tool
 
 ## Troubleshooting
 
-| Symptom                                       | Likely cause and fix                                                                                                  |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `the game runs as Administrator...`           | Open the terminal with _Run as administrator_                                                                         |
-| `cannot read the item count`                  | Wrong tab open, or the `itemCount` box is off. Run `calibrate`, or pass `--count`                                     |
-| `captured frame is entirely black`            | Switch the game to windowed or borderless                                                                             |
-| `aspect ratios wider than 16:9`               | Set the game to a 16:9 resolution or narrower                                                                         |
-| Scan stops with `lost focus`                  | Something took focus, such as a notification. Fullscreen-capable notifications can be silenced with Focus Assist      |
-| Many `identical to the previous frame` issues | Clicks arrive too quickly or are being blocked. Raise `--pace`, and check that you're using an Administrator terminal |
-| `no rarity stars found` on everything         | The `rarity` box is off, or a colour filter is active                                                                 |
-| `unrecognized artifact name`                  | Run `update-data` for new sets, or the `name` box is off                                                              |
-| Wrong items after scrolling                   | Your scroll distance differs. Adjust `inventory.grid.scrollTicksPerRow`                                               |
-| Most achievements `unverified`                | The `title` box is off. Run `calibrate --screen achievements`                                                         |
-| `tesseract not found`                         | Install it, or pass `--tesseract "C:\path\to\tesseract.exe"`                                                          |
+| Symptom                                                     | Likely cause and fix                                                                                                                         |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `the game runs as Administrator...`                         | Open the terminal with _Run as administrator_                                                                                                |
+| `cannot read the item count`                                | Wrong tab open, or the `itemCount` box is off. Run `calibrate`, or pass `--count`                                                            |
+| `captured frame is entirely black`                          | Switch the game to windowed or borderless                                                                                                    |
+| `aspect ratios wider than 16:9`                             | Set the game to a 16:9 resolution or narrower                                                                                                |
+| Scan stops with `lost focus`                                | Something took focus, such as a notification. Fullscreen-capable notifications can be silenced with Focus Assist                             |
+| Many `identical to the previous frame` issues               | Clicks arrive too quickly or are being blocked. Raise `--pace`, and check that you're using an Administrator terminal                        |
+| `no rarity stars found` on everything                       | The `rarity` box is off, or a colour filter is active                                                                                        |
+| `unrecognized artifact name`                                | Run `update-data` for new sets, or the `name` box is off                                                                                     |
+| Wrong items after scrolling                                 | Your scroll distance differs. Adjust `inventory.grid.scrollTicksPerRow`                                                                      |
+| Most achievements `unverified`                              | The `title` box is off. Run `calibrate --screen achievements`                                                                                |
+| `equipped by "...", which isn't a character I know`         | The holder is the Traveler, who goes by your own name. Pass `--traveler-name` with it                                                        |
+| `unreadable name ... (if this is the Traveler...)`          | The same, for `characters`                                                                                                                   |
+| `cannot read character names`                               | The character screen isn't open (press `C`), or the `characters.header` box is off. Run `calibrate --screen characters`                      |
+| `... kept changing between reads`                           | The page hadn't settled, or the box catches something that moves. Raise `--pace`, and use `--save-frames` to see it                          |
+| `N talents are drawn in blue, but constellation C raises M` | A background is being taken for blue, or a boosted level for plain. Use `--save-frames` and `calibrate --screen characters` on that page     |
+| `unreadable refinement` on a 3-star or better weapon        | The `weapons.refinement` box is off. Run `calibrate --screen weapons`                                                                        |
+| `unreadable ... talent level`                               | The `characters.talentLevel` box misses the text, which sits lower when a talent's name wraps. Check it with `calibrate --screen characters` |
+| `tesseract not found`                                       | Install it, or pass `--tesseract "C:\path\to\tesseract.exe"`                                                                                 |
 
 ## Known limitations
 
 - **The optional `totalRolls` GOOD field isn't filled in.**
+- **Characters can't be scanned from screenshots.** The scan clicks through pages, so it needs the live game. `--save-frames` keeps what it saw for checking afterwards.
+- **Two characters are listed by name as having an alternate sprint**, Mona and Kamisato Ayaka, which puts their burst one position lower on the talents page. A newer character with one would have its burst read from the wrong row until it is added to the list.
+- **Tartaglia's passive is removed on a guess.** The scan assumes the first four characters are the party, as the character screen lists it first. If your party isn't at the top, the wrong characters lose a level.
+- **Weapons repeating the previous one are only noted.** Stacks of identical weapons look the same as a missed click, so the scan can't tell them apart. Compare the weapon count with the game's if it matters.
+- **The artifact scan doesn't use the equipped strip.** Weapons check whether anyone holds them, but an artifact held by the Traveler without `--traveler-name` just gets no `location`.
 - **`notFound` achievements can't be confirmed individually.** They're treated as incomplete, so the printed total is the check that nothing was missed.
 - **Long result lists are only partly read.** Only rows visible without scrolling are checked. A full name usually narrows results enough, and anything not found gets `needsReview`.
 - **Materials aren't scanned.** Artifacts, weapons, characters and achievements are. `export good` accepts a `materials.json` from elsewhere.
