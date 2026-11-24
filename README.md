@@ -37,6 +37,7 @@
 | Artifact reading                        | Tested on the real game         | A full scan of a 748-item inventory on a 1920×1080 client exported 381 artifacts with no issues. A sample of frames was compared by eye with the game; the rest weren't checked individually                      |
 | Inventory traversal                     | Tested on the real game         | The first 384 items of that scan had no duplicates or ordering breaks. Items after that were below the rarity filter, so they weren't kept for checking. A simulated grid covers other window and inventory sizes |
 | Achievement scan                        | Tested on the real game         | A full live scan found 495 completed stages, matching the game's own total exactly                                                                                                                                |
+| **Weapon scan**                         | **Not tested on the real game** | Parsing is covered by unit tests with scripted OCR. The weapon screen boxes and grid come from Inventory Kamera's data and are unchecked |
 | Exports                                 | Partly tested                   | Field names and set keys compared against Genshin Optimizer's schema and key list. Imports into the sites aren't covered by the test suite                                                                        |
 | Reference data                          | Tested                          | 297 of 299 artifact pieces match Genshin Optimizer's data; the other 2 have aliases                                                                                                                               |
 | Win32 capture and input                 | Tested on the real game         | Used by the live scans above, and `make test` runs the capture and input structure tests                                                                                                                          |
@@ -304,6 +305,20 @@ Run `gensin-scan <command> -h` for full details. Exit codes: `0` success, `1` fa
 | `--countdown`     | `5s`             | Delay before a live scan starts                                               |
 
 Tip: run a real scan once with `--save-frames frames`. Then you can experiment with `--from-dir frames` and layouts without touching the game.
+
+### `weapons`
+
+Reads weapons from the Weapons tab of the inventory. Open that tab first, then run it. It takes the same flags as `artifacts`, except that `--min-rarity` defaults to `3` and `--traveler-name` applies to equipped weapons. The report is `weapons.json` by default.
+
+```powershell
+.\gensin-scan.exe weapons --limit 10
+.\gensin-scan.exe calibrate --screen weapons
+.\gensin-scan.exe export good
+```
+
+Each weapon gets a key, level, ascension, refinement, lock state and equipped character. The level is read as "level/cap", and the cap gives the ascension. The rarity comes from the colour of the name banner and only decides which weapons stay in the report.
+
+**The weapon screen hasn't been checked against the real game.** Its boxes were converted from Inventory Kamera's, and the grid is assumed to match the artifact one. Run `calibrate --screen weapons` with the weapon panel showing, and fix any box that is off with `--layout`. Try `--limit 10` before a full scan.
 
 ### `achievements`
 
@@ -655,6 +670,7 @@ The images in `internal/scan/testdata` are **synthetic mock-ups** drawn by `tool
 
 ## Acknowledgements
 
+- [Inventory Kamera](https://github.com/Andrewthe13th/Inventory_Kamera) (MIT) shows how to read weapons and characters. The weapon panel boxes, the "level/cap" ascension rule and the banner-colour rarity check follow its approach.
 - [AkashaScanner](https://github.com/xenesty/AkashaScanner) (MIT) inspired this project's overall approach. This is an independent Go implementation, though it reuses that project's screen coordinates, star colours and substat roll values as a starting point.
 - [Genshin Optimizer](https://github.com/frzyc/genshin-optimizer) defines the GOOD format, and its data was used to verify the catalog.
 - [Paimon.moe](https://github.com/MadeBaruna/paimon-moe) supplies achievement data, and HoYoWiki supplies artifact and character names.
