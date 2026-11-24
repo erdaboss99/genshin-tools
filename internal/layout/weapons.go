@@ -12,6 +12,9 @@ type Weapons struct {
 	Level      Box `json:"level"`
 	Refinement Box `json:"refinement"`
 	Equipped   Box `json:"equipped"`
+	// EquippedBanner samples the strip the "Equipped" line is drawn on, which only
+	// exists for a weapon a character is holding.
+	EquippedBanner Box `json:"equippedBanner"`
 	// LockIcon samples a corner of the lock toggle, which is dark when on.
 	LockIcon Box `json:"lockIcon"`
 }

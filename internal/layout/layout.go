@@ -57,7 +57,9 @@ func Default() Layout {
 			Level:      Box{-388, 285, -302, 305},
 			Refinement: Box{-385, 317, -369, 331},
 			Equipped:   Box{-272, -110, -82, -85},
-			LockIcon:   Box{-121, 284, -117, 288},
+			// A strip of the equipped line, left of the character icon.
+			EquippedBanner: Box{-403, 617, -396, 630},
+			LockIcon:       Box{-121, 284, -117, 288},
 		},
 		// The character coordinates started from Inventory Kamera's, and were then
 		// adjusted against screenshots of the attributes, constellation and talents
