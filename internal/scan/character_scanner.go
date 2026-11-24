@@ -274,7 +274,7 @@ func (s CharacterScanner) readTalentLevel(ctx context.Context, rect image.Rectan
 		if err != nil {
 			return 0, false, raw, err
 		}
-		raw, err = r.readRect(rect, ocr.ModeLine, levelAllowed)
+		raw, err = r.readRect(rect, ocr.ModeBlock, levelAllowed)
 		if err != nil {
 			return 0, false, raw, err
 		}
