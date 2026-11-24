@@ -128,3 +128,15 @@ func TestDefaultCharacterLayout(t *testing.T) {
 		t.Error("a talent list without a step must be rejected")
 	}
 }
+
+func TestTalentLevelBoxCoversWrappedNames(t *testing.T) {
+	// A talent with a two-line name has its level about 9 reference pixels lower than
+	// one with a one-line name, and the box has to hold both.
+	box := Default().Characters.TalentLevel
+	if height := box.Bottom - box.Top; height < 22 {
+		t.Errorf("talent level box is %d tall, too short for wrapped names", height)
+	}
+	if step := Default().Characters.TalentStep; box.Bottom-box.Top >= step {
+		t.Errorf("talent level box (%d) reaches the next talent (%d)", box.Bottom-box.Top, step)
+	}
+}

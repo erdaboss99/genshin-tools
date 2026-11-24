@@ -35,7 +35,9 @@ type Characters struct {
 	// TalentLevel holds the level of the first talent, the normal attack, on the
 	// talents page. The skill and the burst follow, TalentStep apart. Characters with
 	// an alternate sprint have it before the burst, so the burst is one step further
-	// down for them.
+	// down for them. Each talent sits in a fixed slot with its text centred in it, so
+	// a name that wraps onto two lines pushes the level lower. The box is tall enough
+	// for both, and its right edge stops short of the talent icon's glow.
 	TalentLevel Box `json:"talentLevel"`
 	TalentStep  int `json:"talentStep"`
 }

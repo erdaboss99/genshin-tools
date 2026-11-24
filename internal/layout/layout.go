@@ -71,7 +71,7 @@ func Default() Layout {
 			TalentsTab:       Point{135, 290},
 			Constellations:   Column{X: 1130, FirstY: 180, StepY: 75},
 			Activate:         Box{70, 665, 100, 695},
-			TalentLevel:      Box{1080, 113, 1136, 131},
+			TalentLevel:      Box{1080, 113, 1130, 136},
 			TalentStep:       61,
 		},
 		Achievements: Achievements{
