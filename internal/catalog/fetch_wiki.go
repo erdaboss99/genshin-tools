@@ -241,16 +241,19 @@ func (p wikiCharacter) boosts() (ConstellationBoosts, bool) {
 	if len(p.talents) < 4 || len(p.constellations) <= wikiC5 {
 		return ConstellationBoosts{}, false
 	}
-	candidates := []struct{ kind, title string }{
-		{TalentAuto, p.talents[0]}, {TalentSkill, p.talents[1]}, {TalentBurst, p.talents[2]}, {TalentBurst, p.talents[3]},
+	candidates := []struct {
+		kind  game.TalentKind
+		title string
+	}{
+		{game.TalentAuto, p.talents[0]}, {game.TalentSkill, p.talents[1]}, {game.TalentBurst, p.talents[2]}, {game.TalentBurst, p.talents[3]},
 	}
-	kind := func(desc string) string {
+	kind := func(desc string) game.TalentKind {
 		desc = strings.ToLower(desc)
 		if !strings.Contains(desc, "level of") {
 			return ""
 		}
 		// The longest matching title wins, in case one title contains another.
-		best, bestLen := "", 0
+		best, bestLen := game.TalentKind(""), 0
 		for _, c := range candidates {
 			title := strings.ToLower(c.title)
 			if title != "" && strings.Contains(desc, title) && len(title) > bestLen {

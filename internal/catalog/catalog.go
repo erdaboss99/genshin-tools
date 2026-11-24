@@ -23,19 +23,12 @@ type Achievement struct {
 	IDs          []game.AchievementID `json:"ids"`
 }
 
-// Talent kinds a constellation can raise.
-const (
-	TalentAuto  = "auto"
-	TalentSkill = "skill"
-	TalentBurst = "burst"
-)
-
 // ConstellationBoosts says which talent each of a character's two level-raising
 // constellations improves, by 3 levels. These are usually the skill and the burst,
 // in either order, but a few characters have the normal attack instead.
 type ConstellationBoosts struct {
-	C3 string `json:"c3"`
-	C5 string `json:"c5"`
+	C3 game.TalentKind `json:"c3"`
+	C5 game.TalentKind `json:"c5"`
 }
 
 // Data is the raw reference data.

@@ -208,7 +208,7 @@ func TestFetch(t *testing.T) {
 	if !slices.Equal(data.Characters, []string{"Hu Tao", "Traveler"}) {
 		t.Errorf("Characters = %v", data.Characters)
 	}
-	if want := (ConstellationBoosts{C3: TalentSkill, C5: TalentBurst}); data.Boosts["Hu Tao"] != want || len(data.Boosts) != 1 {
+	if want := (ConstellationBoosts{C3: game.TalentSkill, C5: game.TalentBurst}); data.Boosts["Hu Tao"] != want || len(data.Boosts) != 1 {
 		t.Errorf("Boosts = %+v, want only Hu Tao = %+v", data.Boosts, want)
 	}
 	if !slices.Equal(data.Weapons, []string{"Amos' Bow", "Mistsplitter Reforged"}) {
@@ -253,15 +253,15 @@ func TestConstellationBoosts(t *testing.T) {
 		{"skill then burst", wikiCharacter{
 			talents:        []string{"Attack", "Skill Name", "Burst Name", "Sprint", "Passive"},
 			constellations: []string{"", "", "Increases the Level of Skill Name by 3.", "", "Increases the Level of Burst Name by 3.", ""},
-		}, ConstellationBoosts{TalentSkill, TalentBurst}, true},
+		}, ConstellationBoosts{game.TalentSkill, game.TalentBurst}, true},
 		{"alternate sprint puts the burst fourth", wikiCharacter{
 			talents:        []string{"Attack", "Skill Name", "Alt Sprint", "Burst Name", "Passive"},
 			constellations: []string{"", "", "Increases the Level of Burst Name by 3.", "", "Increases the Level of Skill Name by 3.", ""},
-		}, ConstellationBoosts{TalentBurst, TalentSkill}, true},
+		}, ConstellationBoosts{game.TalentBurst, game.TalentSkill}, true},
 		{"normal attack and different case", wikiCharacter{
 			talents:        []string{"Attack Name ", "Skill Name", "Burst Name", "Passive", "Passive 2"},
 			constellations: []string{"", "", "Increases the level of Normal Attack: attack name by 3.", "", "Increases the Level of BURST NAME by 3.", ""},
-		}, ConstellationBoosts{TalentAuto, TalentBurst}, true},
+		}, ConstellationBoosts{game.TalentAuto, game.TalentBurst}, true},
 		{"no level boosts", wikiCharacter{
 			talents:        []string{"Attack", "Skill Name", "Burst Name", "Passive"},
 			constellations: []string{"", "", "Gains an effect.", "", "Gains another effect.", ""},
@@ -283,8 +283,8 @@ func TestConstellationBoosts(t *testing.T) {
 }
 
 func TestBoostsFor(t *testing.T) {
-	c := New(Data{Boosts: map[string]ConstellationBoosts{"Hu Tao": {C3: TalentSkill, C5: TalentBurst}}})
-	if b, ok := c.BoostsFor("Hu Tao"); !ok || b.C3 != TalentSkill {
+	c := New(Data{Boosts: map[string]ConstellationBoosts{"Hu Tao": {C3: game.TalentSkill, C5: game.TalentBurst}}})
+	if b, ok := c.BoostsFor("Hu Tao"); !ok || b.C3 != game.TalentSkill {
 		t.Errorf("BoostsFor(Hu Tao) = %+v, %v", b, ok)
 	}
 	if _, ok := c.BoostsFor("Traveler"); ok {
