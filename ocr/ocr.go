@@ -10,8 +10,9 @@ type Mode int
 
 // The page segmentation modes the scanners use.
 const (
-	ModeBlock Mode = 6 // A uniform block of text, such as the substat list.
-	ModeLine  Mode = 7 // A single line of text.
+	ModeBlock Mode = 6  // A uniform block of text, such as the substat list.
+	ModeLine  Mode = 7  // A single line of text.
+	ModeChar  Mode = 10 // A single character, such as one digit.
 )
 
 // Request describes one recognition job.
