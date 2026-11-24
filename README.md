@@ -48,7 +48,7 @@
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
 | Windows 10 or 11                                                         | The only supported platform                                                                       |
 | [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) 4.1 or newer | On Windows: `winget install tesseract-ocr.tesseract`                                              |
-| Go 1.27 and Make                                                         | To build. Make runs from WSL, which cross-compiles for Windows and runs the tests through interop |
+| Go 1.27, plus Make or PowerShell                                         | To build. Use `make` from WSL, or `.\make.ps1` from PowerShell on Windows                         |
 | Game language: English                                                   | Names are matched against English data                                                            |
 | Game window at least 1280 wide, no wider than 16:9                       | Windowed or borderless. Exclusive fullscreen captures as black                                    |
 | No colour filters                                                        | Night Light, ReShade, f.lux and similar will break star detection, which relies on exact colours  |
@@ -84,6 +84,12 @@ flowchart TD
 ```sh
 make build                                 # produces bin/gensin-scan.exe
 cp bin/gensin-scan.exe /mnt/c/Users/<you>/ # copy it somewhere Windows can run it
+```
+
+Or from PowerShell on Windows, with Go installed there:
+
+```powershell
+.\make.ps1 build                           # produces bin\gensin-scan.exe
 ```
 
 **2. Check your setup** from an **Administrator** PowerShell on Windows:
@@ -223,6 +229,18 @@ make tidy             # tidy every module in the workspace
 
 GOOS=windows go test ./... ./control/... ./ocr/...  # test every module without make
 GOOS=windows go test ./ocr/...                      # test one library
+```
+
+**Develop on Windows** (no make needed; `make.ps1` has the same targets):
+
+```powershell
+.\make.ps1                  # list targets
+.\make.ps1 check            # format check, vet, stdlib-only check and tests
+.\make.ps1 build            # build bin\gensin-scan.exe
+.\make.ps1 check build      # run several targets in order
+
+# If script execution is blocked:
+powershell -ExecutionPolicy Bypass -File .\make.ps1 build
 ```
 
 ## Calibrating
@@ -574,13 +592,13 @@ flowchart LR
 Things worth knowing:
 
 - **`./...` stops at module boundaries.** From the root it only covers the scanner, so use the `make` targets, or list the modules: `GOOS=windows go test ./... ./control/... ./ocr/...`.
-- **Everything targets Windows.** The `control` package only exists there, so the scanner won't build for anything else. From WSL, set `GOOS=windows` when running `go` directly; the `make` targets already do. For editor support in WSL, give your Go tools the same setting, such as `"go.toolsEnvVars": { "GOOS": "windows" }` in VS Code.
+- **Everything targets Windows.** The `control` package only exists there, so the scanner won't build for anything else. From WSL, set `GOOS=windows` when running `go` directly; the `make` and `make.ps1` targets already do. For editor support in WSL, give your Go tools the same setting, such as `"go.toolsEnvVars": { "GOOS": "windows" }` in VS Code.
 - **The scanner builds without the network.** Only running `genfixtures` downloads its dependency, even though it's in the workspace.
 - **The root `go.mod` also has `replace` lines.** `go mod tidy` and `GOWORK=off` ignore `go.work`, so these keep both working without published versions. `make tidy` tidies every module.
 
 ## Development
 
-Run `make` to list all targets. The main ones:
+Run `make` (WSL) or `.\make.ps1` (Windows PowerShell) to list all targets. Both have the same targets, so `make check` and `.\make.ps1 check` do the same thing. The main ones:
 
 | Target             | Purpose                                                                                |
 | ------------------ | -------------------------------------------------------------------------------------- |

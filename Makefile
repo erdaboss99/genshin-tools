@@ -2,6 +2,7 @@
 #
 # The scanner only runs on Windows. Everything here targets Windows, and works from
 # WSL: Go cross-compiles, and interop runs the resulting tests and tools on Windows.
+# On Windows without make, run .\make.ps1 instead: it has the same targets.
 
 export GOOS        := windows
 export GOARCH      := amd64
