@@ -99,7 +99,7 @@ func (p WeaponParser) Parse(ctx context.Context, frame *image.RGBA) (record Weap
 	if record.Raw.Level, err = r.read(p.Layout.Level, ocr.ModeLine, levelAllowed); err != nil {
 		return record, false, err
 	}
-	if level, ascension, ok := parseWeaponLevel(record.Raw.Level); ok {
+	if level, ascension, ok := parseLevelCap(record.Raw.Level); ok {
 		w.Level, w.Ascension = level, ascension
 	} else {
 		record.issue("unreadable level %q", record.Raw.Level)
@@ -165,10 +165,10 @@ func (p WeaponParser) readRefinement(r reader) (refinement int, raw string, err 
 	return 0, raw, nil
 }
 
-// parseWeaponLevel reads "Lv. 80/90". The number after the slash is the level cap of
+// parseLevelCap reads "Lv. 80/90", as shown for weapons and characters. The number after the slash is the level cap of
 // the current ascension, so it gives the ascension: a weapon at 20/40 has been
 // ascended once, while one at 20/20 has not.
-func parseWeaponLevel(text string) (level game.Level, ascension int, ok bool) {
+func parseLevelCap(text string) (level game.Level, ascension int, ok bool) {
 	m := levelPattern.FindStringSubmatch(itemCountDigitFixes.Replace(text))
 	if m == nil {
 		return 0, 0, false

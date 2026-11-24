@@ -114,9 +114,9 @@ func TestParseWeaponLevel(t *testing.T) {
 		{"", 0, 0, false},
 	}
 	for _, tt := range tests {
-		level, ascension, ok := parseWeaponLevel(tt.text)
+		level, ascension, ok := parseLevelCap(tt.text)
 		if level != tt.level || ascension != tt.ascension || ok != tt.ok {
-			t.Errorf("parseWeaponLevel(%q) = %d, %d, %v; want %d, %d, %v", tt.text, level, ascension, ok, tt.level, tt.ascension, tt.ok)
+			t.Errorf("parseLevelCap(%q) = %d, %d, %v; want %d, %d, %v", tt.text, level, ascension, ok, tt.level, tt.ascension, tt.ok)
 		}
 	}
 }
