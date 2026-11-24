@@ -145,3 +145,38 @@ func TestMainStatsForReturnsCopy(t *testing.T) {
 		t.Fatal("MainStatsFor exposed internal state")
 	}
 }
+
+func TestWeaponAndCharacterValidate(t *testing.T) {
+	good := Weapon{Key: "MistsplitterReforged", Level: 90, Ascension: 6, Refinement: 1}
+	if err := good.Validate(); err != nil {
+		t.Errorf("valid weapon rejected: %v", err)
+	}
+	// A weapon on a level cap can be on either side of the ascension.
+	for _, ascension := range []int{0, 1} {
+		if err := (Weapon{Key: "X", Level: 20, Ascension: ascension, Refinement: 5}).Validate(); err != nil {
+			t.Errorf("level 20 at ascension %d rejected: %v", ascension, err)
+		}
+	}
+	bad := []Weapon{
+		{Level: 1, Refinement: 1},
+		{Key: "X", Level: 91, Ascension: 6, Refinement: 1},
+		{Key: "X", Level: 30, Ascension: 0, Refinement: 1},
+		{Key: "X", Level: 21, Ascension: 2, Refinement: 1},
+		{Key: "X", Level: 1, Ascension: 0, Refinement: 6},
+	}
+	for _, w := range bad {
+		if w.Validate() == nil {
+			t.Errorf("%+v accepted", w)
+		}
+	}
+
+	c := Character{Key: "HuTao", Level: 90, Ascension: 6, Constellation: 1, Talent: Talents{Auto: 10, Skill: 10, Burst: 10}}
+	if err := c.Validate(); err != nil {
+		t.Errorf("valid character rejected: %v", err)
+	}
+	c.Constellation = 7
+	c.Talent.Burst = 0
+	if err := c.Validate(); err == nil {
+		t.Error("impossible character accepted")
+	}
+}
