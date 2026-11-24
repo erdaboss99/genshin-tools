@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/erdaboss99/gensin-tools/internal/catalog"
@@ -185,9 +186,15 @@ func (g *characterGame) Scroll(int) error      { return nil }
 func (g *characterGame) Type(string) error     { return nil }
 func (g *characterGame) PressEnter() error     { return nil }
 
+// characterScanner builds a scanner whose OCR gives each reply twice, as fields are
+// only accepted once two reads in a row agree.
 func characterScanner(g *characterGame, replies ...string) CharacterScanner {
+	var doubled []string
+	for _, r := range replies {
+		doubled = append(doubled, r, r)
+	}
 	return CharacterScanner{
-		Game: g, Layout: g.layout, OCR: &scriptedOCR{replies: replies},
+		Game: g, Layout: g.layout, OCR: &scriptedOCR{replies: doubled},
 		Catalog: characterCatalog(), Pace: 0,
 	}
 }
@@ -396,5 +403,64 @@ func TestCharacterScannerSavesPages(t *testing.T) {
 	g2 := newCharacterGame(0)
 	if _, err := characterScanner(g2, "Pyro / Hu Tao", "Level 1 / 20", "Lv. 1", "Lv. 1", "Lv. 1", "Pyro / Hu Tao").Scan(t.Context()); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestCharacterScannerIgnoresAMisreadWhileTheScreenFadesIn(t *testing.T) {
+	// The first read of Iansan's normal attack caught half-drawn text and gave 11. The
+	// next two agree on 1, so the wrong value is never accepted.
+	g := newCharacterGame(0)
+	s := CharacterScanner{Game: g, Layout: g.layout, Catalog: characterCatalog(), OCR: &scriptedOCR{replies: []string{
+		"Electro / Hu Tao", "Electro / Hu Tao",
+		"Level 90 / 90", "Level 90 / 90",
+		"Lv. 11", "Lv. 1", "Lv. 1", // normal attack
+		"Lv. 1", "Lv. 1", // skill
+		"Lv. 1", "Lv. 1", // burst
+		"Electro / Hu Tao", "Electro / Hu Tao",
+	}}}
+	records, err := s.Scan(t.Context())
+	if err != nil || len(records) != 1 {
+		t.Fatalf("records = %d, err = %v", len(records), err)
+	}
+	if got := records[0].Character.Talent; got != (game.Talents{Auto: 1, Skill: 1, Burst: 1}) || len(records[0].Issues) != 0 {
+		t.Errorf("talents = %+v, issues = %v", got, records[0].Issues)
+	}
+}
+
+func TestCharacterScannerFlagsReadsThatNeverAgree(t *testing.T) {
+	g := newCharacterGame(0)
+	unstable := []string{"Lv. 3", "Lv. 4", "Lv. 5", "Lv. 6", "Lv. 7", "Lv. 8", "Lv. 9", "Lv. 2"}
+	replies := []string{"Pyro / Hu Tao", "Pyro / Hu Tao", "Level 90 / 90", "Level 90 / 90"}
+	replies = append(replies, unstable...)
+	replies = append(replies, "Lv. 1", "Lv. 1", "Lv. 1", "Lv. 1", "Pyro / Hu Tao", "Pyro / Hu Tao")
+	s := CharacterScanner{Game: g, Layout: g.layout, Catalog: characterCatalog(), OCR: &scriptedOCR{replies: replies}}
+	records, err := s.Scan(t.Context())
+	if err != nil || len(records) != 1 {
+		t.Fatalf("records = %d, err = %v", len(records), err)
+	}
+	if len(records[0].Issues) != 1 || !strings.Contains(records[0].Issues[0], "kept changing") {
+		t.Errorf("issues = %v, want one about the normal attack changing", records[0].Issues)
+	}
+}
+
+func TestCharacterScannerFlagsImpossibleTalentLevels(t *testing.T) {
+	// A talent can't be above 10 without bonuses, whatever OCR read.
+	g := newCharacterGame(0)
+	s := characterScanner(g,
+		"Pyro / Hu Tao", "Level 90 / 90", "Lv. 11", "Lv. 10", "Lv. 10",
+		"Pyro / Hu Tao",
+	)
+	records, err := s.Scan(t.Context())
+	if err != nil || len(records) != 1 || len(records[0].Issues) != 1 {
+		t.Fatalf("records = %+v, err = %v", records, err)
+	}
+}
+
+func TestCharacterScannerHintsAtTravelerName(t *testing.T) {
+	g := newCharacterGame(0, 0, 0, 0)
+	s := characterScanner(g, "Dendro / SomePlayer", "Dendro / SomePlayer", "Dendro / SomePlayer")
+	records, _ := s.Scan(t.Context())
+	if len(records) == 0 || !strings.Contains(strings.Join(records[0].Issues, " "), "--traveler-name") {
+		t.Errorf("records = %+v, want a hint about --traveler-name", records)
 	}
 }

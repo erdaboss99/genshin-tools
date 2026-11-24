@@ -36,6 +36,8 @@ const (
 	overlayDelay  = 500 * time.Millisecond
 	rereadDelay   = 150 * time.Millisecond
 	constellCount = 6
+	// talentMaxBase is the highest a talent can be raised, before constellation bonuses.
+	talentMaxBase = 10
 	talentCount   = 3
 )
 
@@ -134,13 +136,16 @@ func (s CharacterScanner) scanCharacter(ctx context.Context, win layout.Window, 
 		return record, shots, err
 	}
 
-	header, ok, err := s.readHeader(ctx, &record, shots)
+	header, agreed, valid, err := s.readHeader(ctx, &record, shots)
 	if err != nil {
 		return record, shots, err
 	}
-	if !ok {
-		record.issue("unreadable name %q", record.Raw.Header)
+	if !valid {
+		record.issue("unreadable name %q (if this is the Traveler, pass --traveler-name with your in-game name)", record.Raw.Header)
 		return record, shots, nil
+	}
+	if !agreed {
+		record.issue("the name kept changing between reads, last %q", record.Raw.Header)
 	}
 	c := &record.Character
 	c.Key, record.Element = header.Key, header.Element
@@ -168,8 +173,39 @@ func (s CharacterScanner) scanCharacter(ctx context.Context, win layout.Window, 
 	return record, shots, nil
 }
 
-func (s CharacterScanner) readHeader(ctx context.Context, record *CharacterRecord, shots *characterShots) (characterHeader, bool, error) {
+// readStable calls read until two calls in a row give the same valid value. A screen
+// that is still fading in can give a wrong but plausible reading once, such as an
+// extra digit, and it rarely gives the same wrong one twice. When nothing repeats it
+// returns the last valid value with agreed false, and valid is false if there never
+// was one.
+func readStable[T comparable](ctx context.Context, pace Pace, read func() (T, bool, error)) (value T, agreed, valid bool, err error) {
+	var previous T
+	havePrevious := false
 	for attempt := range readAttempts {
+		v, ok, err := read()
+		if err != nil {
+			return value, false, valid, err
+		}
+		if ok {
+			if havePrevious && v == previous {
+				return v, true, true, nil
+			}
+			previous, havePrevious = v, true
+			value, valid = v, true
+		} else {
+			havePrevious = false
+		}
+		if attempt < readAttempts-1 {
+			if err := pace.sleep(ctx, rereadDelay); err != nil {
+				return value, false, valid, err
+			}
+		}
+	}
+	return value, false, valid, nil
+}
+
+func (s CharacterScanner) readHeader(ctx context.Context, record *CharacterRecord, shots *characterShots) (characterHeader, bool, bool, error) {
+	return readStable(ctx, s.Pace, func() (characterHeader, bool, error) {
 		r, err := s.reader(ctx)
 		if err != nil {
 			return characterHeader{}, false, err
@@ -180,40 +216,43 @@ func (s CharacterScanner) readHeader(ctx context.Context, record *CharacterRecor
 			return characterHeader{}, false, err
 		}
 		record.Raw.Header = text
-		if header, ok := parseCharacterHeader(text, s.Catalog, s.TravelerName); ok {
-			return header, true, nil
-		}
-		if attempt < readAttempts-1 {
-			if err := s.Pace.sleep(ctx, rereadDelay); err != nil {
-				return characterHeader{}, false, err
-			}
-		}
-	}
-	return characterHeader{}, false, nil
+		header, ok := parseCharacterHeader(text, s.Catalog, s.TravelerName)
+		return header, ok, nil
+	})
+}
+
+// levelReading is a character's level and ascension as read from the level text.
+type levelReading struct {
+	level     game.Level
+	ascension int
 }
 
 func (s CharacterScanner) readLevel(ctx context.Context, record *CharacterRecord) error {
-	for attempt := range readAttempts {
+	reading, agreed, valid, err := readStable(ctx, s.Pace, func() (levelReading, bool, error) {
 		r, err := s.reader(ctx)
 		if err != nil {
-			return err
+			return levelReading{}, false, err
 		}
 		text, err := r.read(s.Layout.Level, ocr.ModeLine, levelAllowed)
 		if err != nil {
-			return err
+			return levelReading{}, false, err
 		}
 		record.Raw.Level = text
-		if level, ascension, ok := parseLevelCap(text); ok {
-			record.Character.Level, record.Character.Ascension = level, ascension
-			return nil
-		}
-		if attempt < readAttempts-1 {
-			if err := s.Pace.sleep(ctx, rereadDelay); err != nil {
-				return err
-			}
-		}
+		level, ascension, ok := parseLevelCap(text)
+		return levelReading{level, ascension}, ok, nil
+	})
+	if err != nil {
+		return err
 	}
-	record.issue("unreadable level %q", record.Raw.Level)
+	switch {
+	case !valid:
+		record.issue("unreadable level %q", record.Raw.Level)
+	case !agreed:
+		record.issue("the level kept changing between reads, last %q", record.Raw.Level)
+		fallthrough
+	default:
+		record.Character.Level, record.Character.Ascension = reading.level, reading.ascension
+	}
 	return nil
 }
 
@@ -256,15 +295,20 @@ func (s CharacterScanner) readTalents(ctx context.Context, win layout.Window, re
 			position++
 		}
 		rect := win.Rect(talentLevelBox(s.Layout, position))
-		level, boosted, raw, err := s.readTalentLevel(ctx, rect, shots)
+		reading, raw, agreed, valid, err := s.readTalentLevel(ctx, rect, shots)
 		if err != nil {
 			return err
 		}
 		record.Raw.Talents = append(record.Raw.Talents, raw)
-		if level == 0 {
+		switch {
+		case !valid:
 			record.issue("unreadable %s talent level %q", kind, raw)
+		case !agreed:
+			record.issue("the %s talent level kept changing between reads, last %q", kind, raw)
+			fallthrough
+		default:
+			levels[i], blue[i] = reading.level, reading.boosted
 		}
-		levels[i], blue[i] = level, boosted
 	}
 
 	known, haveKnown := s.Catalog.BoostsFor(name)
@@ -282,30 +326,36 @@ func (s CharacterScanner) readTalents(ctx context.Context, win layout.Window, re
 		}
 	}
 	record.Character.Talent = game.Talents{Auto: levels[0], Skill: levels[1], Burst: levels[2]}
+	for i, kind := range kinds {
+		if levels[i] > talentMaxBase {
+			record.issue("the %s talent level is %d, but %d is the most it can be without bonuses", kind, levels[i], talentMaxBase)
+		}
+	}
 	return nil
 }
 
-func (s CharacterScanner) readTalentLevel(ctx context.Context, rect image.Rectangle, shots *characterShots) (level int, boosted bool, raw string, err error) {
-	for attempt := range readAttempts {
+// talentReading is a talent's level and whether it is drawn in blue.
+type talentReading struct {
+	level   int
+	boosted bool
+}
+
+func (s CharacterScanner) readTalentLevel(ctx context.Context, rect image.Rectangle, shots *characterShots) (reading talentReading, raw string, agreed, valid bool, err error) {
+	reading, agreed, valid, err = readStable(ctx, s.Pace, func() (talentReading, bool, error) {
 		r, err := s.reader(ctx)
 		if err != nil {
-			return 0, false, raw, err
+			return talentReading{}, false, err
 		}
 		shots.talents = r.frame
-		raw, err = r.readRect(rect, ocr.ModeBlock, levelAllowed)
+		text, err := r.readRect(rect, ocr.ModeBlock, levelAllowed)
 		if err != nil {
-			return 0, false, raw, err
+			return talentReading{}, false, err
 		}
-		if level, ok := parseTalentLevel(raw); ok {
-			return level, talentBoosted(r.frame, rect), raw, nil
-		}
-		if attempt < readAttempts-1 {
-			if err := s.Pace.sleep(ctx, rereadDelay); err != nil {
-				return 0, false, raw, err
-			}
-		}
-	}
-	return 0, false, raw, nil
+		raw = text
+		level, ok := parseTalentLevel(text)
+		return talentReading{level, talentBoosted(r.frame, rect)}, ok, nil
+	})
+	return reading, raw, agreed, valid, err
 }
 
 // saveShots stores the pages read for a character, named by position and key.
