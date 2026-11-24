@@ -131,19 +131,27 @@ func (p WeaponParser) Parse(ctx context.Context, frame *image.RGBA) (record Weap
 	return record, false, nil
 }
 
-// readRefinement reads the refinement badge, a single digit that Tesseract sometimes
-// misses on the first try. The retries only run after a failed read: first as a
-// single character, then with the crop enlarged further. refinement is 0 when no
+// readRefinement reads the refinement badge, a single digit on a coloured square. The
+// badge is grey for most weapons but orange for others, and the darkest colour
+// channel that the rest of the scanner uses can't separate the orange one's yellow
+// digit, so the green channel goes first. Later attempts only run after a failed
+// read: the other channel, then single-character mode. refinement is 0 when no
 // attempt gave a digit from 1 to 5, and raw is what the first attempt read.
 func (p WeaponParser) readRefinement(r reader) (refinement int, raw string, err error) {
 	rect := r.win.Rect(p.Layout.Refinement)
 	scale := imaging.OCRScale(r.win.Width)
 	attempts := []struct {
-		mode  ocr.Mode
-		scale int
-	}{{ocr.ModeLine, scale}, {ocr.ModeChar, scale}, {ocr.ModeChar, scale * 2}}
+		mode    ocr.Mode
+		scale   int
+		channel imaging.Channel
+	}{
+		{ocr.ModeLine, scale, imaging.Green},
+		{ocr.ModeLine, scale, imaging.Darkest},
+		{ocr.ModeChar, scale, imaging.Green},
+		{ocr.ModeChar, scale * 2, imaging.Darkest},
+	}
 	for i, attempt := range attempts {
-		text, err := r.readRectScaled(rect, attempt.mode, "12345", attempt.scale)
+		text, err := r.readRectChannel(rect, attempt.mode, "12345", attempt.scale, attempt.channel)
 		if err != nil {
 			return 0, raw, err
 		}
