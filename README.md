@@ -486,6 +486,46 @@ Reports keep everything needed to diagnose a bad read:
 - `raw` is exactly what OCR read.
 - `complete` is `false` if the scan stopped early. Exports warn about this.
 
+Weapon and character reports use the same envelope, with `weapon` or `character` in place of `artifact`:
+
+```json
+{
+  "index": 0,
+  "source": "frames/frame-00000.png",
+  "weapon": {
+    "key": "MistsplitterReforged",
+    "level": 90,
+    "ascension": 6,
+    "refinement": 1,
+    "location": "KamisatoAyaka",
+    "lock": true
+  },
+  "rarity": 5,
+  "raw": { "name": "Mistsplitter Reforged", "level": "Lv.90/90", "refinement": "1", "equipped": "Kamisato Ayaka" }
+}
+```
+
+```json
+{
+  "index": 1,
+  "source": "live:1",
+  "character": {
+    "key": "Aino",
+    "level": 80,
+    "ascension": 6,
+    "constellation": 6,
+    "talent": { "auto": 1, "skill": 9, "burst": 9 }
+  },
+  "element": "Hydro",
+  "boosted": ["skill", "burst"],
+  "raw": { "header": "Hydro / Aino", "level": "Lv80/90", "talents": ["Lv.1", "Lv.12", "Lv.12"] }
+}
+```
+
+- A weapon's `rarity` isn't part of GOOD. It only decides which weapons stay in the report.
+- A character's `boosted` lists the talents whose constellation bonus was taken off, so `talent` holds the levels GOOD wants, and `raw.talents` holds what the screen showed.
+- Characters aren't scanned from screenshots, so their `source` is `live:N`. With `--save-frames` the pages are saved as `NNN-key-page.png`, where `NNN` is the `index`.
+
 ## How it works
 
 ### The artifact pipeline
@@ -535,6 +575,54 @@ flowchart TD
     keep --> equipped["OCR the equipped character"]
     flag --> equipped
     equipped --> check["Check level, main stat and substat count"]
+```
+
+### The weapon scan
+
+Weapons go through the same pipeline as artifacts, with a parser for the weapon panel:
+
+```mermaid
+flowchart TD
+    frame["Frame of the weapon panel"] --> name["OCR the name"]
+    name --> ore{"Enhancement ore?"}
+    ore -- Yes --> skip["Skip it"]
+    ore -- No --> match["Match the name to a weapon"]
+    match --> rarity["Rarity from the banner colour, lock from its toggle"]
+    rarity --> level["OCR the level and its cap: the cap gives the ascension"]
+    level --> low{"1 or 2 stars?"}
+    low -- Yes --> one["Refinement is 1"]
+    low -- No --> badge["Read the refinement badge, retrying on other channels and modes"]
+    one --> strip
+    badge --> strip{"Equipped strip showing?"}
+    strip -- No --> free["No holder"]
+    strip -- Yes --> holder["OCR the holder and match it to a character"]
+    holder --> known{"A character I know?"}
+    known -- Yes --> done["Weapon record"]
+    known -- No --> issue["Issue: pass --traveler-name if it's the Traveler"]
+    free --> done
+```
+
+### The character scan
+
+Characters can't be read from one frame, because each needs three pages and a click for every constellation, so the scan reads as it goes:
+
+```mermaid
+flowchart TD
+    attributes["Click the Attributes tab"] --> header["Read the element and name until the same reading comes up twice"]
+    header --> again{"Back at the first character?"}
+    again -- Yes --> finish["Stop"]
+    again -- No --> level["Read the level and its cap"]
+    level --> nodes["Open the constellations and click each node"]
+    nodes --> locked{"Is the Activate button showing?"}
+    locked -- No --> nodes
+    locked -- Yes --> count["The nodes before it are the unlocked ones"]
+    count --> talents["Open the talents and read the three levels"]
+    talents --> blue["Take 3 off each level drawn in blue"]
+    blue --> check{"Matches the constellation and the HoYoWiki data?"}
+    check -- Yes --> next["Click the next character arrow"]
+    check -- No --> issue["Record it with an issue"]
+    issue --> next
+    next --> attributes
 ```
 
 ### The achievement scan
@@ -618,6 +706,15 @@ flowchart TD
 - **Failed scans keep their progress.** Whatever stops a scan, the results so far are saved with `complete: false`. A failure before anything was read leaves an earlier report untouched.
 - **Blank regions skip OCR.** Tesseract invents text when shown an empty, contrast-stretched region, which could assign an unequipped artifact to a random character.
 - **Input is focus-gated.** Each input call first checks that the game is the foreground window, so keystrokes can't land in another application.
+- **Weapon level and cap give the ascension.** A weapon at `20/40` has been ascended once and one at `20/20` hasn't, so the cap is read along with the level.
+- **The equipped strip decides whether a weapon is held.** The box where the holder's name would be holds stray marks, or part of a description, on weapons nobody holds. The cream strip behind the "Equipped" line only exists when someone does, so the name is only read, and only matched, when it shows. A holder that doesn't match, usually the Traveler, becomes an issue instead of a blank.
+- **One and two star weapons have no refinement.** The panel shows none, so it is 1 without reading anything.
+- **The darkest channel isn't always the best one.** The refinement badge on some weapons (yellow on orange) and talent levels raised by constellations (light blue) have almost no contrast on it, but read cleanly on the green channel. Those regions try green first, or second, and fall back to the other.
+- **Blue means boosted, and teal isn't blue.** Boosted talent levels are drawn in a bright light blue, and 7% to 11% of their box is that colour. A teal page background has the same hue but is darker, so the test asks for bright pixels. On a teal page, the loose test counted 45% of an unboosted row.
+- **Talent levels come from the list.** The current talents page shows all three levels at once, so nothing is clicked. A name that wraps onto two lines pushes its level lower, so the level box is tall enough for both.
+- **Constellations are counted by the Activate button.** A node that isn't unlocked shows a white button, so the count is how many come before the first one.
+- **A reading counts once the same value has come up twice.** A page that is still fading in can give a wrong but believable number, such as an `11` for a `1`, and it rarely gives the same wrong one twice. Reads that fail to parse in between don't matter, and a field that never repeats is reported.
+- **The Traveler is keyed by element.** GOOD names them `TravelerAnemo`, `TravelerGeo` and so on. Their name on screen is the player's own, so it can only be told from a mismatch by passing `--traveler-name`.
 
 ### Project layout
 
@@ -654,6 +751,7 @@ internal/catalog/
     match.go            Fuzzy lookups
     storage.go          Embedded snapshot and cached files
     fetch*.go           Downloading from HoYoWiki and Paimon.moe, including weapons and constellation boosts
+    data/               JSON snapshots embedded in the binary: artifacts, characters, constellation boosts, weapons, achievements
 internal/export/        GOOD, Paimon.moe and Seelie.me formats, and reading Paimon.moe back
 control/                Module: game window, capture and input
     control_windows.go  The Game interface
