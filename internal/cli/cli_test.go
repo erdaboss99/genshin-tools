@@ -278,3 +278,43 @@ func TestFailedScanKeepsEarlierReportWhenNothingWasRead(t *testing.T) {
 		t.Errorf("earlier report was replaced: %q", raw)
 	}
 }
+
+func TestExportGOODIncludesWeapons(t *testing.T) {
+	dir := t.TempDir()
+	weapons := filepath.Join(dir, "weapons.json")
+	output := filepath.Join(dir, "good.json")
+
+	valid := game.Weapon{Key: "MistsplitterReforged", Level: 90, Ascension: 6, Refinement: 1}
+	records := []scan.WeaponRecord{
+		{Index: 0, Weapon: valid},
+		{Index: 1, Weapon: valid, Issues: []string{"unreadable refinement"}},
+		{Index: 2, Weapon: game.Weapon{Level: 1}},
+	}
+	if err := scan.WriteJSON(weapons, scan.NewReport(records, true)); err != nil {
+		t.Fatal(err)
+	}
+
+	code, stdout, stderr := run(t, "export", "good", "--weapons", weapons, "-i", filepath.Join(dir, "missing.json"), "-o", output)
+	if code != 1 {
+		t.Fatalf("an explicit artifact report that is missing must fail, got %d: %s", code, stderr)
+	}
+	// Without -i the missing artifact report is just skipped.
+	code, stdout, stderr = run(t, "export", "good", "--weapons", weapons, "-o", output)
+	if code != 0 {
+		t.Fatalf("export failed: %s", stderr)
+	}
+	raw, err := os.ReadFile(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc export.GOOD
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		t.Fatal(err)
+	}
+	if len(doc.Weapons) != 1 || doc.Weapons[0] != valid || len(doc.Artifacts) != 0 {
+		t.Errorf("weapons = %+v, artifacts = %d", doc.Weapons, len(doc.Artifacts))
+	}
+	if !strings.Contains(stdout, "1 weapons") {
+		t.Errorf("summary = %q", stdout)
+	}
+}
