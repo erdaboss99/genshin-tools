@@ -76,6 +76,16 @@ func (w *window) PressEnter() error {
 	return sendKey(keyboardInput{vk: vkReturn, flags: keyUp})
 }
 
+func (w *window) PressEscape() error {
+	if err := w.checkFocus(); err != nil {
+		return err
+	}
+	if err := sendKey(keyboardInput{vk: vkEscape}); err != nil {
+		return err
+	}
+	return sendKey(keyboardInput{vk: vkEscape, flags: keyUp})
+}
+
 func sendMouse(input mouseInput) error {
 	input.kind = inputMouseKind
 	return sendInput(unsafe.Pointer(&input))

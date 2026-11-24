@@ -52,6 +52,7 @@ const (
 	keyUp      = 0x0002
 	keyUnicode = 0x0004
 	vkReturn   = 0x0D
+	vkEscape   = 0x1B
 )
 
 type point struct{ x, y int32 }

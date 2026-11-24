@@ -35,6 +35,8 @@ type Game interface {
 	Type(text string) error
 	// PressEnter presses the Enter key.
 	PressEnter() error
+	// PressEscape presses the Escape key, which closes the game's overlays.
+	PressEscape() error
 }
 
 // Status is the environment report shown by the doctor command.
