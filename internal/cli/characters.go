@@ -11,18 +11,20 @@ import (
 
 // characterOptions holds the characters command's flags.
 type characterOptions struct {
-	engine    engineFlags
-	out       string
-	limit     int
-	traveler  string
-	pace      float64
-	countdown time.Duration
+	engine     engineFlags
+	out        string
+	limit      int
+	saveFrames string
+	traveler   string
+	pace       float64
+	countdown  time.Duration
 }
 
 func (o *characterOptions) register(flags *flag.FlagSet) {
 	o.engine.register(flags)
 	flags.StringVar(&o.out, "o", "characters.json", "output report file")
 	flags.IntVar(&o.limit, "limit", 0, "stop after this many characters (0 scans everything)")
+	flags.StringVar(&o.saveFrames, "save-frames", "", "save a screenshot of each page read to this directory, to check the results against")
 	flags.StringVar(&o.traveler, "traveler-name", "", "your in-game name, shown instead of \"Traveler\"")
 	flags.Float64Var(&o.pace, "pace", 1, "multiplier for delays between actions; raise it if screens get missed")
 	flags.DurationVar(&o.countdown, "countdown", defaultCountdown, "delay before the scan starts")
@@ -45,14 +47,15 @@ func (a *app) runCharacters(ctx context.Context, args []string) error {
 		return err
 	}
 	scanner := scan.CharacterScanner{
-		Game:         game,
-		Layout:       engine.layout.Characters,
-		OCR:          engine.ocr,
-		Catalog:      engine.catalog,
-		TravelerName: opts.traveler,
-		Pace:         scan.Pace(opts.pace),
-		Limit:        opts.limit,
-		Log:          a.log,
+		Game:          game,
+		Layout:        engine.layout.Characters,
+		OCR:           engine.ocr,
+		Catalog:       engine.catalog,
+		TravelerName:  opts.traveler,
+		Pace:          scan.Pace(opts.pace),
+		Limit:         opts.limit,
+		SaveFramesDir: opts.saveFrames,
+		Log:           a.log,
 	}
 	records, scanErr := scanner.Scan(ctx)
 	// A failure with nothing to show must not replace an earlier report.
