@@ -23,7 +23,8 @@ var (
 type Game interface {
 	// Size returns the client area's size in physical pixels.
 	Size() (width, height int)
-	// Capture returns the current contents of the client area.
+	// Capture returns the current contents of the client area, in a new image each
+	// call, so callers may keep earlier captures.
 	Capture() (*image.RGBA, error)
 	// MoveTo places the cursor without clicking.
 	MoveTo(x, y int) error
