@@ -169,7 +169,7 @@ These use PowerShell.
 .\genshin-tools.exe scan characters --traveler-name "YourName"
 .\genshin-tools.exe export good
 
-.\genshin-tools.exe scan achievements --save-failures failures
+.\genshin-tools.exe scan achievements --save-issues achievement-issues
 .\genshin-tools.exe export paimon
 .\genshin-tools.exe export seelie
 ```
@@ -186,6 +186,15 @@ These use PowerShell.
 ```powershell
 .\genshin-tools.exe scan artifacts --min-rarity 3
 .\genshin-tools.exe scan artifacts --min-rarity 5
+```
+
+**Keep screenshots of only the items with issues**, then fix the layout and re-scan just those:
+
+```powershell
+.\genshin-tools.exe scan artifacts --save-issues artifact-issues
+.\genshin-tools.exe scan weapons --save-issues weapon-issues
+.\genshin-tools.exe scan characters --save-issues character-issues
+.\genshin-tools.exe scan artifacts --from-dir .\artifact-issues -o artifacts-issues-rescan.json
 ```
 
 **Continue an interrupted achievement scan:**
@@ -340,6 +349,7 @@ Run `genshin-tools scan` or `genshin-tools export` to list their subcommands, an
 | `-o`              | `artifacts.json` | Report file                                                                   |
 | `--from-dir`      |                  | Scan screenshots in this directory instead of the live game                   |
 | `--save-frames`   |                  | Save each frame, to re-scan later without the game                            |
+| `--save-issues`   |                  | Save the frame of each artifact with issues, named like `--save-frames` does  |
 | `--traveler-name` |                  | Your in-game name, so equipped artifacts resolve to `Traveler`                |
 | `--min-rarity`    | `4`              | Leave out lower rarities. Unknown rarities are kept, so failures stay visible |
 | `--limit`         | `0` (all)        | Stop after this many items                                                    |
@@ -350,9 +360,11 @@ Run `genshin-tools scan` or `genshin-tools export` to list their subcommands, an
 
 Tip: run a real scan once with `--save-frames frames`. Then you can experiment with `--from-dir frames` and layouts without touching the game.
 
+`--save-issues` keeps only the frames behind artifacts with issues, as `frame-NNNNN.png` where `NNNNN` is the report's `index`. Items below `--min-rarity` are never saved. Both flags can be used together, and `--from-dir` on the issues directory re-scans just those items.
+
 ### `scan weapons`
 
-Reads weapons from the Weapons tab of the inventory. Open that tab first, then run it. It takes the same flags as `scan artifacts`, including `--from-dir` and `--save-frames`, except that `--min-rarity` defaults to `3` and `--traveler-name` applies to equipped weapons. The report is `weapons.json` by default.
+Reads weapons from the Weapons tab of the inventory. Open that tab first, then run it. It takes the same flags as `scan artifacts`, including `--from-dir`, `--save-frames` and `--save-issues`, except that `--min-rarity` defaults to `3` and `--traveler-name` applies to equipped weapons. The report is `weapons.json` by default.
 
 ```powershell
 .\genshin-tools.exe scan weapons --limit 10
@@ -380,6 +392,7 @@ Reads every character from the character screen. Press `C` to open it with any c
 | `--traveler-name` |                   | Your in-game name, which the game shows instead of "Traveler"                                                |
 | `--limit`         | `0` (all)         | Stop after this many characters                                                                              |
 | `--save-frames`   |                   | Save a screenshot of each page read, to check the results against. Each is about 1.7 MB, three per character |
+| `--save-issues`   |                   | Save the three screenshots of each character with issues only                                                |
 | `--pace`          | `1`               | Multiplier for delays. Raise it if screens get missed                                                        |
 | `--countdown`     | `5s`              | Delay before the scan starts                                                                                 |
 
@@ -387,7 +400,7 @@ The game shows talent levels with constellation bonuses added, and GOOD wants th
 
 The Traveler's key includes their element, such as `TravelerAnemo`, which is how GOOD names them. The game shows your own name for the Traveler, so pass it with `--traveler-name`, or that character is reported as unreadable.
 
-Each field is read until the same value has come up twice, because a page that is still fading in can give a wrong but believable number once, such as an extra digit. A field that never settles gets an `issues` entry, as does a talent above level 10 once the bonuses are taken off. `--save-frames` keeps three screenshots per character, named by position and key, such as `001-Aino-talents.png`, and the position matches the report's `index`.
+Each field is read until the same value has come up twice, because a page that is still fading in can give a wrong but believable number once, such as an extra digit. A field that never settles gets an `issues` entry, as does a talent above level 10 once the bonuses are taken off. `--save-frames` keeps three screenshots per character, named by position and key, such as `001-Aino-talents.png`, and the position matches the report's `index`. `--save-issues` names them the same way, but only for characters with issues.
 
 The scan was checked on a full run of 26 characters, with no issues left after screenshots of several were compared with the report. Characters can't be scanned from saved screenshots, because the scan has to click through the pages. Try `--limit 3` first, and use `scan calibrate --screen characters` if a box is off.
 
@@ -396,7 +409,7 @@ The scan was checked on a full run of 26 characters, with no issues left after s
 Takes `-o`, `--from-dir`, `--limit`, `--pace` and `--countdown` as above, plus:
 
 - `--resume <report>` keeps results whose title was confirmed and searches everything else again.
-- `--save-failures <dir>` saves a screenshot of each result that couldn't be confirmed.
+- `--save-issues <dir>` saves a screenshot of each result that couldn't be confirmed, as `achievement-ID.png`, and points the result's `source` at it.
 
 A live scan also reads the game's own "Achievements completed" total and prints it beside the scan's count, as a cross-check.
 
@@ -526,7 +539,7 @@ Weapon and character reports use the same envelope, with `weapon` or `character`
 
 - A weapon's `rarity` isn't part of GOOD. It only decides which weapons stay in the report.
 - A character's `boosted` lists the talents whose constellation bonus was taken off, so `talent` holds the levels GOOD wants, and `raw.talents` holds what the screen showed.
-- Characters aren't scanned from screenshots, so their `source` is `live:N`. With `--save-frames` the pages are saved as `NNN-key-page.png`, where `NNN` is the `index`.
+- Characters aren't scanned from screenshots, so their `source` is `live:N`. With `--save-frames` or `--save-issues` the pages are saved as `NNN-key-page.png`, where `NNN` is the `index`.
 
 ## How it works
 
