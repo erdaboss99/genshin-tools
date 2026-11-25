@@ -1,6 +1,6 @@
-# gensin-tools
+# genshin-tools
 
-`gensin-scan` is a Windows tool that reads your Genshin Impact **artifacts**, **weapons**, **characters** and **achievements** from the game's screen using OCR, then exports them for tools like [Genshin Optimizer](https://frzyc.github.io/genshin-optimizer/), [Paimon.moe](https://paimon.moe) and [Seelie.me](https://seelie.me).
+`genshin-tools` is a Windows tool that reads your Genshin Impact **artifacts**, **weapons**, **characters** and **achievements** from the game's screen using OCR, then exports them for tools like [Genshin Optimizer](https://frzyc.github.io/genshin-optimizer/), [Paimon.moe](https://paimon.moe) and [Seelie.me](https://seelie.me).
 
 - **Pure Go standard library.** The scanner and its libraries have no third-party modules and no cgo. Win32 is called through `syscall`, and OCR runs through the Tesseract program.
 - **Strongly typed.** Slots, stats, rarities and IDs are distinct types that reject invalid values, including when saved reports are read back.
@@ -89,27 +89,27 @@ flowchart TD
 **1. Build** from WSL:
 
 ```sh
-make build                                 # produces bin/gensin-scan.exe
-cp bin/gensin-scan.exe /mnt/c/Users/<you>/ # copy it somewhere Windows can run it
+make build                                   # produces bin/genshin-tools.exe
+cp bin/genshin-tools.exe /mnt/c/Users/<you>/ # copy it somewhere Windows can run it
 ```
 
 Or from PowerShell on Windows, with Go installed there:
 
 ```powershell
-.\make.ps1 build                           # produces bin\gensin-scan.exe
+.\make.ps1 build                             # produces bin\genshin-tools.exe
 ```
 
 **2. Check your setup** from an **Administrator** PowerShell on Windows:
 
 ```powershell
 cd $HOME
-.\gensin-scan.exe doctor
+.\genshin-tools.exe doctor
 ```
 
 **3. Calibrate.** Open your inventory on the Artifacts tab, select an artifact, then:
 
 ```powershell
-.\gensin-scan.exe calibrate
+.\genshin-tools.exe calibrate
 ```
 
 Follow [Calibrating](#calibrating) until each region reads correctly. Weapons and characters have their own screens to check, with `calibrate --screen weapons` and `calibrate --screen characters`.
@@ -117,8 +117,8 @@ Follow [Calibrating](#calibrating) until each region reads correctly. Weapons an
 **4. Scan artifacts.** With the Artifacts tab still open:
 
 ```powershell
-.\gensin-scan.exe artifacts --traveler-name "YourName"
-.\gensin-scan.exe export good
+.\genshin-tools.exe artifacts --traveler-name "YourName"
+.\genshin-tools.exe export good
 ```
 
 Then import `good.json` into Genshin Optimizer.
@@ -126,9 +126,9 @@ Then import `good.json` into Genshin Optimizer.
 **5. Scan weapons and characters.** Open the Weapons tab of the inventory, then press `C` to open the character screen for the second scan:
 
 ```powershell
-.\gensin-scan.exe weapons --traveler-name "YourName"
-.\gensin-scan.exe characters --traveler-name "YourName"
-.\gensin-scan.exe export good
+.\genshin-tools.exe weapons --traveler-name "YourName"
+.\genshin-tools.exe characters --traveler-name "YourName"
+.\genshin-tools.exe export good
 ```
 
 `export good` reads every report it finds, so the second run adds weapons and characters to the same `good.json`. The Traveler goes by your own in-game name, so pass it, or their weapons and the Traveler themself are reported with issues. See [`weapons`](#weapons) and [`characters`](#characters) for what to check first.
@@ -136,9 +136,9 @@ Then import `good.json` into Genshin Optimizer.
 **6. Scan achievements.** Open the Achievements screen, then:
 
 ```powershell
-.\gensin-scan.exe achievements
-.\gensin-scan.exe export paimon
-.\gensin-scan.exe export seelie
+.\genshin-tools.exe achievements
+.\genshin-tools.exe export paimon
+.\genshin-tools.exe export seelie
 ```
 
 This types a search for each of about 1,600 achievements and takes a while, so try `--limit 10` first and compare the results with the game. If it gets interrupted, continue with `--resume achievements.json`.
@@ -150,114 +150,114 @@ These use PowerShell.
 **Check your setup:**
 
 ```powershell
-.\gensin-scan.exe doctor
-.\gensin-scan.exe version
+.\genshin-tools.exe doctor
+.\genshin-tools.exe version
 ```
 
 **Try a small scan first**, then compare the result with the game:
 
 ```powershell
-.\gensin-scan.exe artifacts --limit 60 --save-frames frames
-.\gensin-scan.exe achievements --limit 10
+.\genshin-tools.exe artifacts --limit 60 --save-frames frames
+.\genshin-tools.exe achievements --limit 10
 ```
 
 **Scan everything and export it:**
 
 ```powershell
-.\gensin-scan.exe artifacts --traveler-name "YourName"
-.\gensin-scan.exe weapons --traveler-name "YourName"
-.\gensin-scan.exe characters --traveler-name "YourName"
-.\gensin-scan.exe export good
+.\genshin-tools.exe artifacts --traveler-name "YourName"
+.\genshin-tools.exe weapons --traveler-name "YourName"
+.\genshin-tools.exe characters --traveler-name "YourName"
+.\genshin-tools.exe export good
 
-.\gensin-scan.exe achievements --save-failures failures
-.\gensin-scan.exe export paimon
-.\gensin-scan.exe export seelie
+.\genshin-tools.exe achievements --save-failures failures
+.\genshin-tools.exe export paimon
+.\genshin-tools.exe export seelie
 ```
 
 **Keep screenshots of weapons and characters, to check the results against.** Weapon frames are about 1.7 MB each, and a character gets three:
 
 ```powershell
-.\gensin-scan.exe weapons --min-rarity 1 --save-frames weapon-frames
-.\gensin-scan.exe characters --limit 10 --save-frames character-frames
+.\genshin-tools.exe weapons --min-rarity 1 --save-frames weapon-frames
+.\genshin-tools.exe characters --limit 10 --save-frames character-frames
 ```
 
 **Include 3-star artifacts, or only 5-star ones:**
 
 ```powershell
-.\gensin-scan.exe artifacts --min-rarity 3
-.\gensin-scan.exe artifacts --min-rarity 5
+.\genshin-tools.exe artifacts --min-rarity 3
+.\genshin-tools.exe artifacts --min-rarity 5
 ```
 
 **Continue an interrupted achievement scan:**
 
 ```powershell
-.\gensin-scan.exe achievements --resume achievements.json
+.\genshin-tools.exe achievements --resume achievements.json
 ```
 
 **Keep your other data on a tracking site.** Export from the site first, then merge:
 
 ```powershell
-.\gensin-scan.exe export paimon --merge my-paimon-export.json -o paimon-import.json
-.\gensin-scan.exe export seelie --merge my-seelie-export.json -o seelie-import.json
+.\genshin-tools.exe export paimon --merge my-paimon-export.json -o paimon-import.json
+.\genshin-tools.exe export seelie --merge my-seelie-export.json -o seelie-import.json
 ```
 
 **Scan saved screenshots**, which sends no input to the game. This works for artifacts, weapons and achievements, but not characters:
 
 ```powershell
-.\gensin-scan.exe artifacts --from-dir .\frames -o artifacts-rescan.json
-.\gensin-scan.exe weapons --from-dir .\weapon-frames -o weapons-rescan.json
-.\gensin-scan.exe achievements --from-dir .\screenshots -o achievements-rescan.json
+.\genshin-tools.exe artifacts --from-dir .\frames -o artifacts-rescan.json
+.\genshin-tools.exe weapons --from-dir .\weapon-frames -o weapons-rescan.json
+.\genshin-tools.exe achievements --from-dir .\screenshots -o achievements-rescan.json
 ```
 
 **Turn a Paimon.moe export into an `achievements.json`**, so you can export to Seelie.me without scanning:
 
 ```powershell
-.\gensin-scan.exe extract paimon -i my-paimon-export.json
-.\gensin-scan.exe export seelie
+.\genshin-tools.exe extract paimon -i my-paimon-export.json
+.\genshin-tools.exe export seelie
 ```
 
 **Export artifacts that have scan issues too.** Check them first, because they may have wrong or missing values:
 
 ```powershell
-.\gensin-scan.exe export good --include-issues -i artifacts.json -o good-all.json
+.\genshin-tools.exe export good --include-issues -i artifacts.json -o good-all.json
 ```
 
 **Calibrate from the game or a screenshot:**
 
 ```powershell
-.\gensin-scan.exe capture -o shot.png
-.\gensin-scan.exe calibrate --image shot.png
-.\gensin-scan.exe calibrate --screen achievements --image shot.png -o achievements-boxes.png
-.\gensin-scan.exe calibrate --screen weapons --image weapon-shot.png -o weapon-boxes.png
-.\gensin-scan.exe calibrate --screen characters --image talents-shot.png -o talents-boxes.png
-.\gensin-scan.exe artifacts --limit 10 --layout layout.json
+.\genshin-tools.exe capture -o shot.png
+.\genshin-tools.exe calibrate --image shot.png
+.\genshin-tools.exe calibrate --screen achievements --image shot.png -o achievements-boxes.png
+.\genshin-tools.exe calibrate --screen weapons --image weapon-shot.png -o weapon-boxes.png
+.\genshin-tools.exe calibrate --screen characters --image talents-shot.png -o talents-boxes.png
+.\genshin-tools.exe artifacts --limit 10 --layout layout.json
 ```
 
 **Slow down for a slower PC, or use more OCR processes:**
 
 ```powershell
-.\gensin-scan.exe artifacts --pace 2 --countdown 10s
-.\gensin-scan.exe artifacts --from-dir .\frames --workers 4
+.\genshin-tools.exe artifacts --pace 2 --countdown 10s
+.\genshin-tools.exe artifacts --from-dir .\frames --workers 4
 ```
 
 **Use a specific Tesseract or a custom OCR model:**
 
 ```powershell
-.\gensin-scan.exe doctor --tesseract "C:\Tools\Tesseract-OCR\tesseract.exe"
-.\gensin-scan.exe artifacts --tessdata .\tessdata --lang genshin_eng
+.\genshin-tools.exe doctor --tesseract "C:\Tools\Tesseract-OCR\tesseract.exe"
+.\genshin-tools.exe artifacts --tessdata .\tessdata --lang genshin_eng
 ```
 
 **Update names after a game patch:**
 
 ```powershell
-.\gensin-scan.exe update-data
+.\genshin-tools.exe update-data
 ```
 
 **Develop from WSL:**
 
 ```sh
 make check            # format check, vet, stdlib-only check and tests
-make build            # build bin/gensin-scan.exe
+make build            # build bin/genshin-tools.exe
 make test             # run every test on Windows through interop
 make update-data      # refresh the embedded reference data
 make fixtures         # redraw the OCR test images
@@ -272,7 +272,7 @@ GOOS=windows go test ./ocr/...                      # test one library
 ```powershell
 .\make.ps1                  # list targets
 .\make.ps1 check            # format check, vet, stdlib-only check and tests
-.\make.ps1 build            # build bin\gensin-scan.exe
+.\make.ps1 build            # build bin\genshin-tools.exe
 .\make.ps1 check build      # run several targets in order
 
 # If script execution is blocked:
@@ -284,9 +284,9 @@ powershell -ExecutionPolicy Bypass -File .\make.ps1 build
 Game patches move things around, so all coordinates live in an editable layout.
 
 ```powershell
-.\gensin-scan.exe calibrate                        # from the live game
-.\gensin-scan.exe calibrate --screen achievements  # with a search result showing
-.\gensin-scan.exe calibrate --image shot.png       # from a saved screenshot
+.\genshin-tools.exe calibrate                        # from the live game
+.\genshin-tools.exe calibrate --screen achievements  # with a search result showing
+.\genshin-tools.exe calibrate --image shot.png       # from a saved screenshot
 ```
 
 This prints what OCR reads in each region and writes `calibration.png` with the regions outlined:
@@ -316,10 +316,10 @@ Each screen has its own part of the layout: `inventory` for artifacts, `weapons`
 To change a region:
 
 ```powershell
-.\gensin-scan.exe calibrate --print-layout > layout.json
+.\genshin-tools.exe calibrate --print-layout > layout.json
 # Edit layout.json, then check it and use it for scans:
-.\gensin-scan.exe calibrate --layout layout.json
-.\gensin-scan.exe artifacts --layout layout.json
+.\genshin-tools.exe calibrate --layout layout.json
+.\genshin-tools.exe artifacts --layout layout.json
 ```
 
 > [!NOTE]
@@ -329,7 +329,7 @@ To change a region:
 
 ## Commands
 
-Run `gensin-scan <command> -h` for full details. Exit codes: `0` success, `1` failure or early stop, `2` invalid usage.
+Run `genshin-tools <command> -h` for full details. Exit codes: `0` success, `1` failure or early stop, `2` invalid usage.
 
 ### `artifacts`
 
@@ -353,9 +353,9 @@ Tip: run a real scan once with `--save-frames frames`. Then you can experiment w
 Reads weapons from the Weapons tab of the inventory. Open that tab first, then run it. It takes the same flags as `artifacts`, including `--from-dir` and `--save-frames`, except that `--min-rarity` defaults to `3` and `--traveler-name` applies to equipped weapons. The report is `weapons.json` by default.
 
 ```powershell
-.\gensin-scan.exe weapons --limit 10
-.\gensin-scan.exe calibrate --screen weapons
-.\gensin-scan.exe export good
+.\genshin-tools.exe weapons --limit 10
+.\genshin-tools.exe calibrate --screen weapons
+.\genshin-tools.exe export good
 ```
 
 Each weapon gets a key, level, ascension, refinement, lock state and equipped character. The level is read as "level/cap", and the cap gives the ascension. The rarity comes from the colour of the name banner and decides which weapons stay in the report. One and two star weapons can't be refined, so their refinement is 1. A weapon only counts as equipped when the cream "Equipped" strip is showing, and if it names someone the catalog doesn't know, the weapon gets an `issues` entry. That is usually the Traveler, whose name is your own, so pass `--traveler-name` as you do for `artifacts` and `characters`.
@@ -367,9 +367,9 @@ A weapon that repeats the one before it gets a note, not an issue, because stack
 Reads every character from the character screen. Press `C` to open it with any character selected, then run it. For each character it reads the attributes page, opens the constellations to count the unlocked ones, and reads the talents page, then moves to the next. It stops when it comes back to the first one. The report is `characters.json` by default.
 
 ```powershell
-.\gensin-scan.exe characters --limit 3
-.\gensin-scan.exe calibrate --screen characters
-.\gensin-scan.exe export good
+.\genshin-tools.exe characters --limit 3
+.\genshin-tools.exe calibrate --screen characters
+.\genshin-tools.exe export good
 ```
 
 | Flag              | Default           | Purpose                                                                                                      |
@@ -426,8 +426,8 @@ Artifacts with scan issues are left out by default, because an otherwise valid a
 Builds an `achievements.json` report from a Paimon.moe export, so you don't need to scan. Use `-i` to choose the export (default `paimon.json`) and `-o` for the report (default `achievements.json`). `--list` prints the completed achievements instead. Stages the name list doesn't know are kept by ID, so run `update-data` after a game patch.
 
 ```powershell
-.\gensin-scan.exe extract paimon -i paimon-moe-data.json
-.\gensin-scan.exe export seelie
+.\genshin-tools.exe extract paimon -i paimon-moe-data.json
+.\genshin-tools.exe export seelie
 ```
 
 ### Setup commands
@@ -712,7 +712,7 @@ flowchart TD
 Each package has one job, and each file within it covers one topic. Everything below is in the root module unless marked otherwise.
 
 ```text
-cmd/gensin-scan/        Entry point
+cmd/genshin-tools/      Entry point
 internal/cli/           One file per command, plus engine.go for shared OCR setup
 internal/game/          Domain types and rules: slot, stat, rarity, artifact, weapon, character, rolls
 internal/scan/
@@ -791,14 +791,14 @@ Run `make` (WSL) or `.\make.ps1` (Windows PowerShell) to list all targets. Both 
 | Target             | Purpose                                                                                |
 | ------------------ | -------------------------------------------------------------------------------------- |
 | `make check`       | Format check, vet, stdlib-only check, tests                                            |
-| `make build`       | Build `bin/gensin-scan.exe`                                                            |
+| `make build`       | Build `bin/genshin-tools.exe`                                                          |
 | `make test`        | Run every test on Windows through interop. Real-OCR tests skip if Tesseract is missing |
 | `make cover`       | Run tests and print total coverage                                                     |
 | `make update-data` | Refresh the data embedded in the binary                                                |
 | `make fixtures`    | Regenerate OCR test images                                                             |
 | `make tidy`        | Tidy every module's `go.mod`                                                           |
 
-Tests find Tesseract the same way the scanner does. Set `GENSIN_TESSERACT` to the path of a `tesseract.exe` to use a specific one, adding it to `WSLENV` when running from WSL.
+Tests find Tesseract the same way the scanner does. Set `GENSHIN_TESSERACT` to the path of a `tesseract.exe` to use a specific one, adding it to `WSLENV` when running from WSL.
 
 The images in `internal/scan/testdata` are **synthetic mock-ups** drawn by `tools/genfixtures` with a generic font, modelled on real screens. They contain no game art and guard the pipeline's behaviour, but they don't show that the layout matches the current game. Real frames show your UID and aren't committed; to recheck after a patch, scan frames saved with `--save-frames`.
 
