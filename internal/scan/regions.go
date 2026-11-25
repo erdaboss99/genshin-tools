@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/erdaboss99/gensin-tools/internal/imaging"
-	"github.com/erdaboss99/gensin-tools/internal/layout"
+	"github.com/erdaboss99/genshin-tools/internal/imaging"
+	"github.com/erdaboss99/genshin-tools/internal/layout"
 )
 
 // NamedRect is a labelled screen region, used for calibration output.

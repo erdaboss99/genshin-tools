@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/erdaboss99/gensin-tools/control"
-	"github.com/erdaboss99/gensin-tools/internal/layout"
+	"github.com/erdaboss99/genshin-tools/control"
+	"github.com/erdaboss99/genshin-tools/internal/layout"
 )
 
 // attachForInput connects to the game and gives the user time to let go of the mouse.

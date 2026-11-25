@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/erdaboss99/gensin-tools/internal/cli"
+	"github.com/erdaboss99/genshin-tools/internal/cli"
 )
 
 // version is set at build time by the Makefile.

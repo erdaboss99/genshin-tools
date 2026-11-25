@@ -6,8 +6,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/erdaboss99/gensin-tools/internal/fuzzy"
-	"github.com/erdaboss99/gensin-tools/internal/game"
+	"github.com/erdaboss99/genshin-tools/internal/fuzzy"
+	"github.com/erdaboss99/genshin-tools/internal/game"
 )
 
 // minSubstatScore is the similarity at which text counts as a substat label.

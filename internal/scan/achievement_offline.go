@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/erdaboss99/gensin-tools/internal/catalog"
-	"github.com/erdaboss99/gensin-tools/internal/game"
+	"github.com/erdaboss99/genshin-tools/internal/catalog"
+	"github.com/erdaboss99/genshin-tools/internal/game"
 )
 
 // ScanAchievementFrames reads saved screenshots of achievement lists without any

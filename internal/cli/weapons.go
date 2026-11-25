@@ -7,7 +7,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/erdaboss99/gensin-tools/internal/scan"
+	"github.com/erdaboss99/genshin-tools/internal/scan"
 )
 
 // weaponOptions holds the weapons command's flags.

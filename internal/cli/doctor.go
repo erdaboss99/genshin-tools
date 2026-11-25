@@ -7,9 +7,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/erdaboss99/gensin-tools/control"
-	"github.com/erdaboss99/gensin-tools/internal/catalog"
-	"github.com/erdaboss99/gensin-tools/internal/layout"
+	"github.com/erdaboss99/genshin-tools/control"
+	"github.com/erdaboss99/genshin-tools/internal/catalog"
+	"github.com/erdaboss99/genshin-tools/internal/layout"
 )
 
 // doctorReport prints check results and counts the failures.

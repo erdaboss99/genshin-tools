@@ -10,7 +10,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/erdaboss99/gensin-tools/internal/imaging"
+	"github.com/erdaboss99/genshin-tools/internal/imaging"
 )
 
 const (

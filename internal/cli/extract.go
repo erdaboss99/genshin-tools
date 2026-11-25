@@ -5,10 +5,10 @@ import (
 	"os"
 	"slices"
 
-	"github.com/erdaboss99/gensin-tools/internal/catalog"
-	"github.com/erdaboss99/gensin-tools/internal/export"
-	"github.com/erdaboss99/gensin-tools/internal/game"
-	"github.com/erdaboss99/gensin-tools/internal/scan"
+	"github.com/erdaboss99/genshin-tools/internal/catalog"
+	"github.com/erdaboss99/genshin-tools/internal/export"
+	"github.com/erdaboss99/genshin-tools/internal/game"
+	"github.com/erdaboss99/genshin-tools/internal/scan"
 )
 
 // paimonSource marks records that came from a Paimon.moe export rather than a scan.

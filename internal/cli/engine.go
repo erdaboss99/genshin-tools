@@ -7,9 +7,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/erdaboss99/gensin-tools/internal/catalog"
-	"github.com/erdaboss99/gensin-tools/internal/layout"
-	"github.com/erdaboss99/gensin-tools/ocr"
+	"github.com/erdaboss99/genshin-tools/internal/catalog"
+	"github.com/erdaboss99/genshin-tools/internal/layout"
+	"github.com/erdaboss99/genshin-tools/ocr"
 )
 
 // engineFlags selects and configures the OCR engine and its reference data.

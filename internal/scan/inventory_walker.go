@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/erdaboss99/gensin-tools/control"
-	"github.com/erdaboss99/gensin-tools/internal/layout"
-	"github.com/erdaboss99/gensin-tools/ocr"
+	"github.com/erdaboss99/genshin-tools/control"
+	"github.com/erdaboss99/genshin-tools/internal/layout"
+	"github.com/erdaboss99/genshin-tools/ocr"
 )
 
 // MaterialCheck reports whether a frame shows an upgrade material, not an artifact.

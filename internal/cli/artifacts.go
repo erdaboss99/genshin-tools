@@ -8,7 +8,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/erdaboss99/gensin-tools/internal/scan"
+	"github.com/erdaboss99/genshin-tools/internal/scan"
 )
 
 // keepOnly filters artifact records in place by minimum rarity. Records with

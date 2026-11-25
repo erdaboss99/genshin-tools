@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/erdaboss99/gensin-tools/internal/catalog"
-	"github.com/erdaboss99/gensin-tools/internal/game"
-	"github.com/erdaboss99/gensin-tools/internal/layout"
+	"github.com/erdaboss99/genshin-tools/internal/catalog"
+	"github.com/erdaboss99/genshin-tools/internal/game"
+	"github.com/erdaboss99/genshin-tools/internal/layout"
 )
 
 func weaponParser(replies ...string) WeaponParser {

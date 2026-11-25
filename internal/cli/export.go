@@ -7,9 +7,9 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/erdaboss99/gensin-tools/internal/export"
-	"github.com/erdaboss99/gensin-tools/internal/game"
-	"github.com/erdaboss99/gensin-tools/internal/scan"
+	"github.com/erdaboss99/genshin-tools/internal/export"
+	"github.com/erdaboss99/genshin-tools/internal/game"
+	"github.com/erdaboss99/genshin-tools/internal/scan"
 )
 
 func (a *app) runExport(args []string) error {

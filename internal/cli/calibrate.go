@@ -10,11 +10,11 @@ import (
 	"image/draw"
 	"strings"
 
-	"github.com/erdaboss99/gensin-tools/control"
-	"github.com/erdaboss99/gensin-tools/internal/imaging"
-	"github.com/erdaboss99/gensin-tools/internal/layout"
-	"github.com/erdaboss99/gensin-tools/internal/scan"
-	"github.com/erdaboss99/gensin-tools/ocr"
+	"github.com/erdaboss99/genshin-tools/control"
+	"github.com/erdaboss99/genshin-tools/internal/imaging"
+	"github.com/erdaboss99/genshin-tools/internal/layout"
+	"github.com/erdaboss99/genshin-tools/internal/scan"
+	"github.com/erdaboss99/genshin-tools/ocr"
 )
 
 // screen names the game screen being calibrated.

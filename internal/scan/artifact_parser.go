@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/erdaboss99/gensin-tools/internal/catalog"
-	"github.com/erdaboss99/gensin-tools/internal/fuzzy"
-	"github.com/erdaboss99/gensin-tools/internal/game"
-	"github.com/erdaboss99/gensin-tools/internal/imaging"
-	"github.com/erdaboss99/gensin-tools/internal/layout"
-	"github.com/erdaboss99/gensin-tools/ocr"
+	"github.com/erdaboss99/genshin-tools/internal/catalog"
+	"github.com/erdaboss99/genshin-tools/internal/fuzzy"
+	"github.com/erdaboss99/genshin-tools/internal/game"
+	"github.com/erdaboss99/genshin-tools/internal/imaging"
+	"github.com/erdaboss99/genshin-tools/internal/layout"
+	"github.com/erdaboss99/genshin-tools/ocr"
 )
 
 const (

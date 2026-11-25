@@ -3,7 +3,7 @@ package scan
 import (
 	"fmt"
 
-	"github.com/erdaboss99/gensin-tools/internal/game"
+	"github.com/erdaboss99/genshin-tools/internal/game"
 )
 
 // RawWeaponText preserves what OCR read, for diagnosing bad results.

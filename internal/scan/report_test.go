@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/erdaboss99/gensin-tools/internal/game"
+	"github.com/erdaboss99/genshin-tools/internal/game"
 )
 
 func TestReportRoundTrip(t *testing.T) {

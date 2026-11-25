@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/erdaboss99/gensin-tools/internal/catalog"
-	"github.com/erdaboss99/gensin-tools/internal/fuzzy"
-	"github.com/erdaboss99/gensin-tools/internal/game"
+	"github.com/erdaboss99/genshin-tools/internal/catalog"
+	"github.com/erdaboss99/genshin-tools/internal/fuzzy"
+	"github.com/erdaboss99/genshin-tools/internal/game"
 )
 
 // The character screens are read the way Inventory Kamera
