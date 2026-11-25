@@ -15,7 +15,7 @@ import (
 
 // fakeModeEnv makes the test binary act as a fake tesseract.exe when it is set. The
 // variable passes through to the child process along with the rest of the environment.
-const fakeModeEnv = "GENSIN_FAKE_TESSERACT_MODE"
+const fakeModeEnv = "GENSHIN_FAKE_TESSERACT_MODE"
 
 // The behaviours the fake can take on.
 const (

@@ -19,7 +19,7 @@ import (
 
 func realOCR(t *testing.T) ocr.Tesseract {
 	t.Helper()
-	path, err := ocr.Locate(os.Getenv("GENSIN_TESSERACT"))
+	path, err := ocr.Locate(os.Getenv("GENSHIN_TESSERACT"))
 	if err != nil {
 		t.Skip("tesseract is not installed")
 	}

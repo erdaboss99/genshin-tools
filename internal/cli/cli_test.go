@@ -179,8 +179,8 @@ func TestPrintLayoutRoundTrips(t *testing.T) {
 // Setting these makes the test binary act as a fake tesseract.exe. They pass through
 // to the child process along with the rest of the environment.
 const (
-	fakeGoodCallsEnv = "GENSIN_FAKE_TESSERACT_GOOD_CALLS"
-	fakeCountFileEnv = "GENSIN_FAKE_TESSERACT_COUNT_FILE"
+	fakeGoodCallsEnv = "GENSHIN_FAKE_TESSERACT_GOOD_CALLS"
+	fakeCountFileEnv = "GENSHIN_FAKE_TESSERACT_COUNT_FILE"
 )
 
 func TestMain(m *testing.M) {
