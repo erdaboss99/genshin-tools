@@ -1,4 +1,4 @@
-# gensin-tools build automation. Run "make" or "make help" for the target list.
+# genshin-tools build automation. Run "make" or "make help" for the target list.
 #
 # The scanner only runs on Windows. Everything here targets Windows, and works from
 # WSL: Go cross-compiles, and interop runs the resulting tests and tools on Windows.
@@ -8,7 +8,7 @@ export GOOS        := windows
 export GOARCH      := amd64
 export CGO_ENABLED := 0
 
-BINARY     := gensin-scan
+BINARY     := genshin-tools
 PACKAGE    := ./cmd/$(BINARY)
 BIN_DIR    := bin
 VERSION    := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
@@ -31,7 +31,7 @@ help: ## Show this help
 all: check build ## Run all checks and build
 
 .PHONY: build
-build: ## Build bin/gensin-scan.exe
+build: ## Build bin/genshin-tools.exe
 	go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BIN_DIR)/$(BINARY).exe $(PACKAGE)
 
 .PHONY: test

@@ -1,4 +1,4 @@
-// Command gensin-scan reads Genshin Impact artifacts and achievements from the
+// Command genshin-tools reads Genshin Impact artifacts and achievements from the
 // game's screen using OCR and exports them for use in other tools.
 package main
 

@@ -163,6 +163,6 @@ func (a *app) printAchievementSummary(s achievementSummary, path string, gameCou
 		fmt.Fprintf(a.stdout, "To retry the %d that need review, run again with --resume %s\n", s.review, path)
 	}
 	if s.total > 0 && s.unverified > s.total/2 {
-		fmt.Fprintln(a.stdout, `Most titles could not be verified, so the title region is probably off. Run "gensin-scan calibrate --screen achievements".`)
+		fmt.Fprintln(a.stdout, `Most titles could not be verified, so the title region is probably off. Run "genshin-tools calibrate --screen achievements".`)
 	}
 }

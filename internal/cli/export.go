@@ -14,7 +14,7 @@ import (
 
 func (a *app) runExport(args []string) error {
 	if len(args) == 0 {
-		fmt.Fprintln(a.stderr, "usage: gensin-scan export <good|paimon|seelie> [flags]")
+		fmt.Fprintln(a.stderr, "usage: genshin-tools export <good|paimon|seelie> [flags]")
 		return errUsage
 	}
 	format, rest := args[0], args[1:]

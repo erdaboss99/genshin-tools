@@ -9,10 +9,10 @@ import (
 	"log/slog"
 )
 
-const usage = `gensin-scan reads Genshin Impact artifacts and achievements using OCR.
+const usage = `genshin-tools reads Genshin Impact artifacts and achievements using OCR.
 
 Usage:
-  gensin-scan <command> [flags]
+  genshin-tools <command> [flags]
 
 Scanning:
   artifacts     Scan artifacts from the live game or saved screenshots
@@ -35,7 +35,7 @@ Setup:
   update-data   Download the latest artifact, character, weapon and achievement names
   version       Print the version
 
-Run "gensin-scan <command> -h" for a command's flags.
+Run "genshin-tools <command> -h" for a command's flags.
 `
 
 // errUsage marks errors whose message has already been shown by the flag package.
@@ -98,7 +98,7 @@ func (a *app) dispatch(ctx context.Context, args []string) error {
 	case "update-data":
 		return a.runUpdateData(ctx, rest)
 	case "version":
-		fmt.Fprintf(a.stdout, "gensin-scan %s\n", a.version)
+		fmt.Fprintf(a.stdout, "genshin-tools %s\n", a.version)
 		return nil
 	case "help", "-h", "--help":
 		fmt.Fprint(a.stdout, usage)
@@ -110,7 +110,7 @@ func (a *app) dispatch(ctx context.Context, args []string) error {
 
 // newFlagSet returns a flag set whose errors surface as errUsage.
 func (a *app) newFlagSet(name string) *flag.FlagSet {
-	fs := flag.NewFlagSet("gensin-scan "+name, flag.ContinueOnError)
+	fs := flag.NewFlagSet("genshin-tools "+name, flag.ContinueOnError)
 	fs.SetOutput(a.stderr)
 	return fs
 }

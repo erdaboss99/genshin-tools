@@ -147,6 +147,6 @@ func (a *app) printArtifactSummary(s artifactSummary, path string) {
 		s.total, s.exportable, s.withIssues, s.corrected)
 	fmt.Fprintf(a.stdout, "Report written to %s\n", path)
 	if s.withIssues > 0 {
-		fmt.Fprintln(a.stdout, `Check the "issues" fields in the report. If many fail the same way, run "gensin-scan calibrate".`)
+		fmt.Fprintln(a.stdout, `Check the "issues" fields in the report. If many fail the same way, run "genshin-tools calibrate".`)
 	}
 }

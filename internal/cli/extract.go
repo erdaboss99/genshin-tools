@@ -16,7 +16,7 @@ const paimonSource = "paimon.moe"
 
 func (a *app) runExtract(args []string) error {
 	if len(args) == 0 || args[0] != "paimon" {
-		fmt.Fprintln(a.stderr, "usage: gensin-scan extract paimon [flags]")
+		fmt.Fprintln(a.stderr, "usage: genshin-tools extract paimon [flags]")
 		return errUsage
 	}
 	var in, out, dataDir string

@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
-    gensin-scan build automation for Windows, mirroring the Makefile.
+    genshin-tools build automation for Windows, mirroring the Makefile.
 
 .DESCRIPTION
     Windows has no make, so this script provides the same targets. Run it from the
     repository root:
 
         .\make.ps1            # list targets
-        .\make.ps1 build      # build bin\gensin-scan.exe
+        .\make.ps1 build      # build bin\genshin-tools.exe
         .\make.ps1 check build
 
     If scripts are blocked, run it as:
@@ -29,7 +29,7 @@ $env:GOOS = 'windows'
 $env:GOARCH = 'amd64'
 $env:CGO_ENABLED = '0'
 
-$Binary = 'gensin-scan'
+$Binary = 'genshin-tools'
 $Package = "./cmd/$Binary"
 $BinDir = 'bin'
 $CoverFile = 'coverage.out'
@@ -69,7 +69,7 @@ function Get-Version {
 $Help = [ordered]@{
     'help'        = 'Show this help'
     'all'         = 'Run all checks and build'
-    'build'       = 'Build bin\gensin-scan.exe'
+    'build'       = 'Build bin\genshin-tools.exe'
     'test'        = 'Run tests (real-OCR tests are skipped when Tesseract is missing)'
     'cover'       = 'Run tests and print total coverage'
     'vet'         = 'Run go vet'

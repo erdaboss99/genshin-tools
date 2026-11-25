@@ -82,6 +82,6 @@ func (a *app) printCharacterSummary(records []scan.CharacterRecord, path string)
 	fmt.Fprintf(a.stdout, "Scanned %d characters: %d exportable, %d with issues.\n", len(records), len(records)-withIssues, withIssues)
 	fmt.Fprintf(a.stdout, "Report written to %s\n", path)
 	if withIssues > 0 {
-		fmt.Fprintln(a.stdout, `Check the "issues" fields in the report. If many fail the same way, run "gensin-scan calibrate --screen characters".`)
+		fmt.Fprintln(a.stdout, `Check the "issues" fields in the report. If many fail the same way, run "genshin-tools calibrate --screen characters".`)
 	}
 }
