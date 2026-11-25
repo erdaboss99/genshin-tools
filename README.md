@@ -9,7 +9,7 @@
 - **Stops safely.** Alt-Tab away from the game and scanning stops, with progress saved.
 
 > [!IMPORTANT]
-> **Run `calibrate` before your first scan**, especially on a window that isn't 16:9. The default coordinates have been checked on one real 1920×1080 client. See [Project status](#project-status) for what has and hasn't been tested.
+> **Run `scan calibrate` before your first scan**, especially on a window that isn't 16:9. The default coordinates have been checked on one real 1920×1080 client. See [Project status](#project-status) for what has and hasn't been tested.
 
 > [!WARNING]
 > Live scanning sends simulated mouse and keyboard input to the game. It never touches game memory or files, but HoYoverse's terms restrict third-party automation, so use it at your own risk. Scanning your own screenshots with `--from-dir` sends no input at all.
@@ -62,19 +62,19 @@ An **Administrator terminal** is required for live scans. The game runs elevated
 
 ```mermaid
 flowchart TD
-    build["Build with make build"] --> doctor["Check setup with doctor"]
+    build["Build with make build"] --> doctor["Check setup with scan doctor"]
     doctor --> ok{"All checks pass?"}
     ok -- No --> fix["Install Tesseract or use an Administrator terminal"]
     fix --> doctor
-    ok -- Yes --> calibrate["Check regions with calibrate"]
+    ok -- Yes --> calibrate["Check regions with scan calibrate"]
     calibrate --> regions{"Regions read correctly?"}
     regions -- No --> layout["Adjust layout.json"]
     layout --> calibrate
     regions -- Yes --> choose{"What do you want to scan?"}
-    choose -- Artifacts --> artifacts["artifacts"]
-    choose -- Weapons --> weapons["weapons"]
-    choose -- Characters --> characters["characters"]
-    choose -- Achievements --> achievements["achievements"]
+    choose -- Artifacts --> artifacts["scan artifacts"]
+    choose -- Weapons --> weapons["scan weapons"]
+    choose -- Characters --> characters["scan characters"]
+    choose -- Achievements --> achievements["scan achievements"]
     artifacts --> good["export good"]
     weapons --> good
     characters --> good
@@ -103,21 +103,21 @@ Or from PowerShell on Windows, with Go installed there:
 
 ```powershell
 cd $HOME
-.\genshin-tools.exe doctor
+.\genshin-tools.exe scan doctor
 ```
 
 **3. Calibrate.** Open your inventory on the Artifacts tab, select an artifact, then:
 
 ```powershell
-.\genshin-tools.exe calibrate
+.\genshin-tools.exe scan calibrate
 ```
 
-Follow [Calibrating](#calibrating) until each region reads correctly. Weapons and characters have their own screens to check, with `calibrate --screen weapons` and `calibrate --screen characters`.
+Follow [Calibrating](#calibrating) until each region reads correctly. Weapons and characters have their own screens to check, with `scan calibrate --screen weapons` and `scan calibrate --screen characters`.
 
 **4. Scan artifacts.** With the Artifacts tab still open:
 
 ```powershell
-.\genshin-tools.exe artifacts --traveler-name "YourName"
+.\genshin-tools.exe scan artifacts --traveler-name "YourName"
 .\genshin-tools.exe export good
 ```
 
@@ -126,17 +126,17 @@ Then import `good.json` into Genshin Optimizer.
 **5. Scan weapons and characters.** Open the Weapons tab of the inventory, then press `C` to open the character screen for the second scan:
 
 ```powershell
-.\genshin-tools.exe weapons --traveler-name "YourName"
-.\genshin-tools.exe characters --traveler-name "YourName"
+.\genshin-tools.exe scan weapons --traveler-name "YourName"
+.\genshin-tools.exe scan characters --traveler-name "YourName"
 .\genshin-tools.exe export good
 ```
 
-`export good` reads every report it finds, so the second run adds weapons and characters to the same `good.json`. The Traveler goes by your own in-game name, so pass it, or their weapons and the Traveler themself are reported with issues. See [`weapons`](#weapons) and [`characters`](#characters) for what to check first.
+`export good` reads every report it finds, so the second run adds weapons and characters to the same `good.json`. The Traveler goes by your own in-game name, so pass it, or their weapons and the Traveler themself are reported with issues. See [`scan weapons`](#scan-weapons) and [`scan characters`](#scan-characters) for what to check first.
 
 **6. Scan achievements.** Open the Achievements screen, then:
 
 ```powershell
-.\genshin-tools.exe achievements
+.\genshin-tools.exe scan achievements
 .\genshin-tools.exe export paimon
 .\genshin-tools.exe export seelie
 ```
@@ -150,26 +150,26 @@ These use PowerShell.
 **Check your setup:**
 
 ```powershell
-.\genshin-tools.exe doctor
+.\genshin-tools.exe scan doctor
 .\genshin-tools.exe version
 ```
 
 **Try a small scan first**, then compare the result with the game:
 
 ```powershell
-.\genshin-tools.exe artifacts --limit 60 --save-frames frames
-.\genshin-tools.exe achievements --limit 10
+.\genshin-tools.exe scan artifacts --limit 60 --save-frames frames
+.\genshin-tools.exe scan achievements --limit 10
 ```
 
 **Scan everything and export it:**
 
 ```powershell
-.\genshin-tools.exe artifacts --traveler-name "YourName"
-.\genshin-tools.exe weapons --traveler-name "YourName"
-.\genshin-tools.exe characters --traveler-name "YourName"
+.\genshin-tools.exe scan artifacts --traveler-name "YourName"
+.\genshin-tools.exe scan weapons --traveler-name "YourName"
+.\genshin-tools.exe scan characters --traveler-name "YourName"
 .\genshin-tools.exe export good
 
-.\genshin-tools.exe achievements --save-failures failures
+.\genshin-tools.exe scan achievements --save-failures failures
 .\genshin-tools.exe export paimon
 .\genshin-tools.exe export seelie
 ```
@@ -177,21 +177,21 @@ These use PowerShell.
 **Keep screenshots of weapons and characters, to check the results against.** Weapon frames are about 1.7 MB each, and a character gets three:
 
 ```powershell
-.\genshin-tools.exe weapons --min-rarity 1 --save-frames weapon-frames
-.\genshin-tools.exe characters --limit 10 --save-frames character-frames
+.\genshin-tools.exe scan weapons --min-rarity 1 --save-frames weapon-frames
+.\genshin-tools.exe scan characters --limit 10 --save-frames character-frames
 ```
 
 **Include 3-star artifacts, or only 5-star ones:**
 
 ```powershell
-.\genshin-tools.exe artifacts --min-rarity 3
-.\genshin-tools.exe artifacts --min-rarity 5
+.\genshin-tools.exe scan artifacts --min-rarity 3
+.\genshin-tools.exe scan artifacts --min-rarity 5
 ```
 
 **Continue an interrupted achievement scan:**
 
 ```powershell
-.\genshin-tools.exe achievements --resume achievements.json
+.\genshin-tools.exe scan achievements --resume achievements.json
 ```
 
 **Keep your other data on a tracking site.** Export from the site first, then merge:
@@ -204,9 +204,9 @@ These use PowerShell.
 **Scan saved screenshots**, which sends no input to the game. This works for artifacts, weapons and achievements, but not characters:
 
 ```powershell
-.\genshin-tools.exe artifacts --from-dir .\frames -o artifacts-rescan.json
-.\genshin-tools.exe weapons --from-dir .\weapon-frames -o weapons-rescan.json
-.\genshin-tools.exe achievements --from-dir .\screenshots -o achievements-rescan.json
+.\genshin-tools.exe scan artifacts --from-dir .\frames -o artifacts-rescan.json
+.\genshin-tools.exe scan weapons --from-dir .\weapon-frames -o weapons-rescan.json
+.\genshin-tools.exe scan achievements --from-dir .\screenshots -o achievements-rescan.json
 ```
 
 **Turn a Paimon.moe export into an `achievements.json`**, so you can export to Seelie.me without scanning:
@@ -225,26 +225,26 @@ These use PowerShell.
 **Calibrate from the game or a screenshot:**
 
 ```powershell
-.\genshin-tools.exe capture -o shot.png
-.\genshin-tools.exe calibrate --image shot.png
-.\genshin-tools.exe calibrate --screen achievements --image shot.png -o achievements-boxes.png
-.\genshin-tools.exe calibrate --screen weapons --image weapon-shot.png -o weapon-boxes.png
-.\genshin-tools.exe calibrate --screen characters --image talents-shot.png -o talents-boxes.png
-.\genshin-tools.exe artifacts --limit 10 --layout layout.json
+.\genshin-tools.exe scan capture -o shot.png
+.\genshin-tools.exe scan calibrate --image shot.png
+.\genshin-tools.exe scan calibrate --screen achievements --image shot.png -o achievements-boxes.png
+.\genshin-tools.exe scan calibrate --screen weapons --image weapon-shot.png -o weapon-boxes.png
+.\genshin-tools.exe scan calibrate --screen characters --image talents-shot.png -o talents-boxes.png
+.\genshin-tools.exe scan artifacts --limit 10 --layout layout.json
 ```
 
 **Slow down for a slower PC, or use more OCR processes:**
 
 ```powershell
-.\genshin-tools.exe artifacts --pace 2 --countdown 10s
-.\genshin-tools.exe artifacts --from-dir .\frames --workers 4
+.\genshin-tools.exe scan artifacts --pace 2 --countdown 10s
+.\genshin-tools.exe scan artifacts --from-dir .\frames --workers 4
 ```
 
 **Use a specific Tesseract or a custom OCR model:**
 
 ```powershell
-.\genshin-tools.exe doctor --tesseract "C:\Tools\Tesseract-OCR\tesseract.exe"
-.\genshin-tools.exe artifacts --tessdata .\tessdata --lang genshin_eng
+.\genshin-tools.exe scan doctor --tesseract "C:\Tools\Tesseract-OCR\tesseract.exe"
+.\genshin-tools.exe scan artifacts --tessdata .\tessdata --lang genshin_eng
 ```
 
 **Update names after a game patch:**
@@ -284,9 +284,9 @@ powershell -ExecutionPolicy Bypass -File .\make.ps1 build
 Game patches move things around, so all coordinates live in an editable layout.
 
 ```powershell
-.\genshin-tools.exe calibrate                        # from the live game
-.\genshin-tools.exe calibrate --screen achievements  # with a search result showing
-.\genshin-tools.exe calibrate --image shot.png       # from a saved screenshot
+.\genshin-tools.exe scan calibrate                        # from the live game
+.\genshin-tools.exe scan calibrate --screen achievements  # with a search result showing
+.\genshin-tools.exe scan calibrate --image shot.png       # from a saved screenshot
 ```
 
 This prints what OCR reads in each region and writes `calibration.png` with the regions outlined:
@@ -311,15 +311,15 @@ Each screen has its own part of the layout: `inventory` for artifacts, `weapons`
 - **`--screen weapons`** draws the weapon boxes on the Weapons tab, with the weapon panel showing. `nameplate`, `lockIcon` and `equippedBanner` are read by colour, so empty text there is expected.
 - **`--screen characters`** draws the character regions and marks every place the scan clicks. The character screen is three pages, so run it on each, with its own `-o` because `calibration.png` is overwritten every time: the attributes page (`header` and `level`), a constellation page (`activate`, the white button on a locked one), and the talents page (the four `talent` boxes, where the fourth is where Mona and Ayaka have their burst). `activate` and the blue talent test are read by colour.
 
-`capture -o file` saves a clean screenshot with nothing drawn on it, which is better than `calibration.png` for judging how well OCR reads a region, because the outlines sit on the text.
+`scan capture -o file` saves a clean screenshot with nothing drawn on it, which is better than `calibration.png` for judging how well OCR reads a region, because the outlines sit on the text.
 
 To change a region:
 
 ```powershell
-.\genshin-tools.exe calibrate --print-layout > layout.json
+.\genshin-tools.exe scan calibrate --print-layout > layout.json
 # Edit layout.json, then check it and use it for scans:
-.\genshin-tools.exe calibrate --layout layout.json
-.\genshin-tools.exe artifacts --layout layout.json
+.\genshin-tools.exe scan calibrate --layout layout.json
+.\genshin-tools.exe scan artifacts --layout layout.json
 ```
 
 > [!NOTE]
@@ -329,9 +329,11 @@ To change a region:
 
 ## Commands
 
-Run `genshin-tools <command> -h` for full details. Exit codes: `0` success, `1` failure or early stop, `2` invalid usage.
+Commands are grouped by what they do: `scan` reads the game and checks your setup for scanning, `export` converts scan reports for other tools, and `extract` turns a tracking site's export into a scan report. `update-data` and `version` stand alone.
 
-### `artifacts`
+Run `genshin-tools scan` or `genshin-tools export` to list their subcommands, and add `-h` to any of them for full details, such as `genshin-tools scan artifacts -h`. Exit codes: `0` success, `1` failure or early stop, `2` invalid usage.
+
+### `scan artifacts`
 
 | Flag              | Default          | Purpose                                                                       |
 | ----------------- | ---------------- | ----------------------------------------------------------------------------- |
@@ -348,27 +350,27 @@ Run `genshin-tools <command> -h` for full details. Exit codes: `0` success, `1` 
 
 Tip: run a real scan once with `--save-frames frames`. Then you can experiment with `--from-dir frames` and layouts without touching the game.
 
-### `weapons`
+### `scan weapons`
 
-Reads weapons from the Weapons tab of the inventory. Open that tab first, then run it. It takes the same flags as `artifacts`, including `--from-dir` and `--save-frames`, except that `--min-rarity` defaults to `3` and `--traveler-name` applies to equipped weapons. The report is `weapons.json` by default.
+Reads weapons from the Weapons tab of the inventory. Open that tab first, then run it. It takes the same flags as `scan artifacts`, including `--from-dir` and `--save-frames`, except that `--min-rarity` defaults to `3` and `--traveler-name` applies to equipped weapons. The report is `weapons.json` by default.
 
 ```powershell
-.\genshin-tools.exe weapons --limit 10
-.\genshin-tools.exe calibrate --screen weapons
+.\genshin-tools.exe scan weapons --limit 10
+.\genshin-tools.exe scan calibrate --screen weapons
 .\genshin-tools.exe export good
 ```
 
 Each weapon gets a key, level, ascension, refinement, lock state and equipped character. The level is read as "level/cap", and the cap gives the ascension. The rarity comes from the colour of the name banner and decides which weapons stay in the report. One and two star weapons can't be refined, so their refinement is 1. A weapon only counts as equipped when the cream "Equipped" strip is showing, and if it names someone the catalog doesn't know, the weapon gets an `issues` entry. That is usually the Traveler, whose name is your own, so pass `--traveler-name` as you do for `artifacts` and `characters`.
 
-A weapon that repeats the one before it gets a note, not an issue, because stacks of identical copies look the same as a missed click, and the scan can't tell them apart. It was checked on a full run of 52 weapons. Try `--limit 10` first on a larger inventory, and use `calibrate --screen weapons` if a box is off.
+A weapon that repeats the one before it gets a note, not an issue, because stacks of identical copies look the same as a missed click, and the scan can't tell them apart. It was checked on a full run of 52 weapons. Try `--limit 10` first on a larger inventory, and use `scan calibrate --screen weapons` if a box is off.
 
-### `characters`
+### `scan characters`
 
 Reads every character from the character screen. Press `C` to open it with any character selected, then run it. For each character it reads the attributes page, opens the constellations to count the unlocked ones, and reads the talents page, then moves to the next. It stops when it comes back to the first one. The report is `characters.json` by default.
 
 ```powershell
-.\genshin-tools.exe characters --limit 3
-.\genshin-tools.exe calibrate --screen characters
+.\genshin-tools.exe scan characters --limit 3
+.\genshin-tools.exe scan calibrate --screen characters
 .\genshin-tools.exe export good
 ```
 
@@ -387,9 +389,9 @@ The Traveler's key includes their element, such as `TravelerAnemo`, which is how
 
 Each field is read until the same value has come up twice, because a page that is still fading in can give a wrong but believable number once, such as an extra digit. A field that never settles gets an `issues` entry, as does a talent above level 10 once the bonuses are taken off. `--save-frames` keeps three screenshots per character, named by position and key, such as `001-Aino-talents.png`, and the position matches the report's `index`.
 
-The scan was checked on a full run of 26 characters, with no issues left after screenshots of several were compared with the report. Characters can't be scanned from saved screenshots, because the scan has to click through the pages. Try `--limit 3` first, and use `calibrate --screen characters` if a box is off.
+The scan was checked on a full run of 26 characters, with no issues left after screenshots of several were compared with the report. Characters can't be scanned from saved screenshots, because the scan has to click through the pages. Try `--limit 3` first, and use `scan calibrate --screen characters` if a box is off.
 
-### `achievements`
+### `scan achievements`
 
 Takes `-o`, `--from-dir`, `--limit`, `--pace` and `--countdown` as above, plus:
 
@@ -430,13 +432,13 @@ Builds an `achievements.json` report from a Paimon.moe export, so you don't need
 .\genshin-tools.exe export seelie
 ```
 
-### Setup commands
+### Setup and other commands
 
 | Command                | Purpose                                                                                                                                                                                                                                                                   |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `doctor`               | Checks Tesseract, language data, layout, reference data, Administrator rights and the game window                                                                                                                                                                         |
-| `calibrate`            | See [Calibrating](#calibrating)                                                                                                                                                                                                                                           |
-| `capture -o file`      | Saves a screenshot of the game window. Doesn't need Administrator rights                                                                                                                                                                                                  |
+| `scan doctor`          | Checks Tesseract, language data, layout, reference data, Administrator rights and the game window                                                                                                                                                                         |
+| `scan calibrate`       | See [Calibrating](#calibrating)                                                                                                                                                                                                                                           |
+| `scan capture -o file` | Saves a screenshot of the game window. Doesn't need Administrator rights                                                                                                                                                                                                  |
 | `update-data [-o dir]` | Downloads current names to your user cache, which then overrides the embedded data. Run it after a game patch adds sets, characters, weapons or achievements. It also refreshes the constellation data, so it makes a request per character and takes about half a minute |
 | `version`              | Prints the version                                                                                                                                                                                                                                                        |
 
@@ -806,26 +808,26 @@ The images in `internal/scan/testdata` are **synthetic mock-ups** drawn by `tool
 
 ## Troubleshooting
 
-| Symptom                                                     | Likely cause and fix                                                                                                                         |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `the game runs as Administrator...`                         | Open the terminal with _Run as administrator_                                                                                                |
-| `cannot read the item count`                                | Wrong tab open, or the `itemCount` box is off. Run `calibrate`, or pass `--count`                                                            |
-| `captured frame is entirely black`                          | Switch the game to windowed or borderless                                                                                                    |
-| `aspect ratios wider than 16:9`                             | Set the game to a 16:9 resolution or narrower                                                                                                |
-| Scan stops with `lost focus`                                | Something took focus, such as a notification. Fullscreen-capable notifications can be silenced with Focus Assist                             |
-| Many `identical to the previous frame` issues               | Clicks arrive too quickly or are being blocked. Raise `--pace`, and check that you're using an Administrator terminal                        |
-| `no rarity stars found` on everything                       | The `rarity` box is off, or a colour filter is active                                                                                        |
-| `unrecognized artifact name`                                | Run `update-data` for new sets, or the `name` box is off                                                                                     |
-| Wrong items after scrolling                                 | Your scroll distance differs. Adjust `inventory.grid.scrollTicksPerRow`                                                                      |
-| Most achievements `unverified`                              | The `title` box is off. Run `calibrate --screen achievements`                                                                                |
-| `equipped by "...", which isn't a character I know`         | The holder is the Traveler, who goes by your own name. Pass `--traveler-name` with it                                                        |
-| `unreadable name ... (if this is the Traveler...)`          | The same, for `characters`                                                                                                                   |
-| `cannot read character names`                               | The character screen isn't open (press `C`), or the `characters.header` box is off. Run `calibrate --screen characters`                      |
-| `... kept changing between reads`                           | The page hadn't settled, or the box catches something that moves. Raise `--pace`, and use `--save-frames` to see it                          |
-| `N talents are drawn in blue, but constellation C raises M` | A background is being taken for blue, or a boosted level for plain. Use `--save-frames` and `calibrate --screen characters` on that page     |
-| `unreadable refinement` on a 3-star or better weapon        | The `weapons.refinement` box is off. Run `calibrate --screen weapons`                                                                        |
-| `unreadable ... talent level`                               | The `characters.talentLevel` box misses the text, which sits lower when a talent's name wraps. Check it with `calibrate --screen characters` |
-| `tesseract not found`                                       | Install it, or pass `--tesseract "C:\path\to\tesseract.exe"`                                                                                 |
+| Symptom                                                     | Likely cause and fix                                                                                                                              |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `the game runs as Administrator...`                         | Open the terminal with _Run as administrator_                                                                                                     |
+| `cannot read the item count`                                | Wrong tab open, or the `itemCount` box is off. Run `scan calibrate`, or pass `--count`                                                            |
+| `captured frame is entirely black`                          | Switch the game to windowed or borderless                                                                                                         |
+| `aspect ratios wider than 16:9`                             | Set the game to a 16:9 resolution or narrower                                                                                                     |
+| Scan stops with `lost focus`                                | Something took focus, such as a notification. Fullscreen-capable notifications can be silenced with Focus Assist                                  |
+| Many `identical to the previous frame` issues               | Clicks arrive too quickly or are being blocked. Raise `--pace`, and check that you're using an Administrator terminal                             |
+| `no rarity stars found` on everything                       | The `rarity` box is off, or a colour filter is active                                                                                             |
+| `unrecognized artifact name`                                | Run `update-data` for new sets, or the `name` box is off                                                                                          |
+| Wrong items after scrolling                                 | Your scroll distance differs. Adjust `inventory.grid.scrollTicksPerRow`                                                                           |
+| Most achievements `unverified`                              | The `title` box is off. Run `scan calibrate --screen achievements`                                                                                |
+| `equipped by "...", which isn't a character I know`         | The holder is the Traveler, who goes by your own name. Pass `--traveler-name` with it                                                             |
+| `unreadable name ... (if this is the Traveler...)`          | The same, for `scan characters`                                                                                                                   |
+| `cannot read character names`                               | The character screen isn't open (press `C`), or the `characters.header` box is off. Run `scan calibrate --screen characters`                      |
+| `... kept changing between reads`                           | The page hadn't settled, or the box catches something that moves. Raise `--pace`, and use `--save-frames` to see it                               |
+| `N talents are drawn in blue, but constellation C raises M` | A background is being taken for blue, or a boosted level for plain. Use `--save-frames` and `scan calibrate --screen characters` on that page     |
+| `unreadable refinement` on a 3-star or better weapon        | The `weapons.refinement` box is off. Run `scan calibrate --screen weapons`                                                                        |
+| `unreadable ... talent level`                               | The `characters.talentLevel` box misses the text, which sits lower when a talent's name wraps. Check it with `scan calibrate --screen characters` |
+| `tesseract not found`                                       | Install it, or pass `--tesseract "C:\path\to\tesseract.exe"`                                                                                      |
 
 ## Known limitations
 
