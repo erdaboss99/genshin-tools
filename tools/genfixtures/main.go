@@ -3,7 +3,7 @@
 // These are mock-ups drawn at the coordinates in internal/layout. They are not game
 // screenshots and contain no game art. They exercise the OCR pipeline end to end, but
 // passing against them says nothing about whether the layout matches the current game
-// client; only "genshin-tools calibrate" on a real screenshot can show that.
+// client; only "genshin-tools scan calibrate" on a real screenshot can show that.
 //
 // Drawing text needs golang.org/x/image, because the standard library has no font
 // rendering. This is a separate module so that the scanner itself stays free of

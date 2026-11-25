@@ -47,7 +47,7 @@ func Default() Layout {
 		},
 		// The weapon boxes are converted from the fractions of the item card that
 		// Inventory Kamera uses, and the grid is assumed to match the artifact one.
-		// Neither has been checked against the real game, so run calibrate first.
+		// Neither has been checked against the real game, so run "genshin-tools scan calibrate" first.
 		Weapons: Weapons{
 			Grid:       grid,
 			ItemCount:  Box{-250, 20, -75, 45},

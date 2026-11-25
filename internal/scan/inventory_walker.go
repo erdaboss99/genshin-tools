@@ -75,7 +75,7 @@ func (w InventoryWalker) readItemCount(ctx context.Context) (int, error) {
 	count, ok := parseItemCount(text)
 	if !ok {
 		tab := cmp.Or(w.Tab, "Artifacts")
-		return 0, fmt.Errorf("cannot read the item count from %q: open the %s tab of your inventory, run calibrate, or pass --count", text, tab)
+		return 0, fmt.Errorf("cannot read the item count from %q: open the %s tab of your inventory, run \"genshin-tools scan calibrate\", or pass --count", text, tab)
 	}
 	return count, nil
 }

@@ -90,7 +90,7 @@ func (s CharacterScanner) Scan(ctx context.Context) ([]CharacterRecord, error) {
 		switch {
 		case key == "":
 			if unreadable++; unreadable >= unreadableLimit {
-				return s.finish(records), errors.New("cannot read character names: open the character screen, run calibrate, or raise --pace")
+				return s.finish(records), errors.New("cannot read character names: open the character screen, run \"genshin-tools scan calibrate\", or raise --pace")
 			}
 		case key == first:
 			return s.finish(records), nil
