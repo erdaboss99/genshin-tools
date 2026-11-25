@@ -28,7 +28,7 @@ const (
 	clearFocusDelay  = 100 * time.Millisecond
 	clearButtonDelay = 250 * time.Millisecond
 
-	failureFrameFormat = "achievement-%d.png"
+	issueFrameFormat = "achievement-%d.png"
 )
 
 // AchievementWalker searches for each achievement in the live game.
@@ -41,9 +41,9 @@ type AchievementWalker struct {
 	Limit   int
 	// Done holds earlier results to keep, which is how interrupted scans resume.
 	Done []AchievementRecord
-	// SaveFailuresDir, when set, stores the frame behind each unconfirmed result.
-	SaveFailuresDir string
-	Log             *slog.Logger
+	// SaveIssuesDir, when set, stores the frame behind each unconfirmed result.
+	SaveIssuesDir string
+	Log           *slog.Logger
 }
 
 // Run scans every achievement, returning all records collected so far even when
@@ -55,8 +55,8 @@ func (w AchievementWalker) Run(ctx context.Context) ([]AchievementRecord, error)
 		return w.Done, err
 	}
 
-	if w.SaveFailuresDir != "" {
-		if err := os.MkdirAll(w.SaveFailuresDir, 0o755); err != nil {
+	if w.SaveIssuesDir != "" {
+		if err := os.MkdirAll(w.SaveIssuesDir, 0o755); err != nil {
 			return w.Done, err
 		}
 	}
@@ -126,8 +126,8 @@ func (w AchievementWalker) scanOne(ctx context.Context, win layout.Window, entry
 			return record, err
 		}
 	}
-	if !keepResult(record) && w.SaveFailuresDir != "" {
-		path := filepath.Join(w.SaveFailuresDir, fmt.Sprintf(failureFrameFormat, entry.IDs[0]))
+	if !keepResult(record) && w.SaveIssuesDir != "" {
+		path := filepath.Join(w.SaveIssuesDir, fmt.Sprintf(issueFrameFormat, entry.IDs[0]))
 		if err := imaging.SavePNG(path, frame); err != nil {
 			return record, fmt.Errorf("save frame: %w", err)
 		}

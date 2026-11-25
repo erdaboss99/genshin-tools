@@ -16,14 +16,14 @@ const unknownCount = -1
 
 // achievementOptions holds the achievements command's flags.
 type achievementOptions struct {
-	engine       engineFlags
-	out          string
-	fromDir      string
-	resume       string
-	limit        int
-	saveFailures string
-	pace         float64
-	countdown    time.Duration
+	engine     engineFlags
+	out        string
+	fromDir    string
+	resume     string
+	limit      int
+	saveIssues string
+	pace       float64
+	countdown  time.Duration
 }
 
 func (o *achievementOptions) register(flags *flag.FlagSet) {
@@ -32,7 +32,7 @@ func (o *achievementOptions) register(flags *flag.FlagSet) {
 	flags.StringVar(&o.fromDir, "from-dir", "", "scan the screenshots in this directory instead of the live game")
 	flags.StringVar(&o.resume, "resume", "", "continue from an earlier report, rescanning only what it lacks")
 	flags.IntVar(&o.limit, "limit", 0, "stop after this many searches (0 scans everything)")
-	flags.StringVar(&o.saveFailures, "save-failures", "", "save a screenshot of each unconfirmed result to this directory")
+	flags.StringVar(&o.saveIssues, "save-issues", "", "save the screenshot of each unconfirmed result to this directory, to check it")
 	flags.Float64Var(&o.pace, "pace", 1, "multiplier for delays between actions; raise it if searches get missed")
 	flags.DurationVar(&o.countdown, "countdown", defaultCountdown, "delay before a live scan starts")
 }
@@ -93,15 +93,15 @@ func (a *app) scanLiveAchievements(ctx context.Context, opts achievementOptions,
 		return result, err
 	}
 	walker := scan.AchievementWalker{
-		Game:            game,
-		Layout:          engine.layout.Achievements,
-		Reader:          reader,
-		Catalog:         engine.catalog,
-		Pace:            scan.Pace(opts.pace),
-		Limit:           opts.limit,
-		Done:            done,
-		SaveFailuresDir: opts.saveFailures,
-		Log:             a.log,
+		Game:          game,
+		Layout:        engine.layout.Achievements,
+		Reader:        reader,
+		Catalog:       engine.catalog,
+		Pace:          scan.Pace(opts.pace),
+		Limit:         opts.limit,
+		Done:          done,
+		SaveIssuesDir: opts.saveIssues,
+		Log:           a.log,
 	}
 	count, ok, err := walker.ReadCompletedCount(ctx)
 	if err != nil {

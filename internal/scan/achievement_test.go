@@ -264,12 +264,12 @@ func TestAwaitResultsStopsAtEmptySearchMessage(t *testing.T) {
 }
 
 func TestNotFoundIsNotRetriedOrSaved(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), "failures")
+	dir := filepath.Join(t.TempDir(), "issues")
 	g := &slowResults{blank: 1000}
 	cat := catalog.New(catalog.Data{Achievements: []catalog.Achievement{{Name: "Hidden", IDs: []game.AchievementID{9}}}})
 	message := `No achievements related to "Hidden"`
 	records, err := AchievementWalker{
-		Game: g, Layout: layout.Default().Achievements, Catalog: cat, SaveFailuresDir: dir,
+		Game: g, Layout: layout.Default().Achievements, Catalog: cat, SaveIssuesDir: dir,
 		Reader: AchievementReader{Layout: layout.Default().Achievements, OCR: &scriptedOCR{replies: []string{message, message}}},
 	}.Run(t.Context())
 	if err != nil {
@@ -287,14 +287,14 @@ func TestNotFoundIsNotRetriedOrSaved(t *testing.T) {
 }
 
 func TestUnconfirmedResultsAreRetriedAndSaved(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), "failures")
+	dir := filepath.Join(t.TempDir(), "issues")
 	cat := catalog.New(catalog.Data{Achievements: []catalog.Achievement{
 		{Name: "Alpha", IDs: []game.AchievementID{1}},
 		{Name: "Alpha Beta", IDs: []game.AchievementID{2}},
 	}})
 	ocrReplies := &scriptedOCR{replies: []string{"Wrong", "Alpha", "Completed", "Wrong", "Wrong"}}
 	records, err := AchievementWalker{
-		Game: &recordingGame{}, Layout: layout.Default().Achievements, Catalog: cat, SaveFailuresDir: dir,
+		Game: &recordingGame{}, Layout: layout.Default().Achievements, Catalog: cat, SaveIssuesDir: dir,
 		Reader: AchievementReader{Layout: layout.Default().Achievements, OCR: ocrReplies},
 	}.Run(t.Context())
 	if err != nil {
