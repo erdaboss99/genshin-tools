@@ -14,11 +14,14 @@ import (
 
 func (a *app) runExport(args []string) error {
 	if len(args) == 0 {
-		fmt.Fprintln(a.stderr, "usage: genshin-tools export <good|paimon|seelie> [flags]")
+		fmt.Fprint(a.stderr, exportUsage)
 		return errUsage
 	}
 	format, rest := args[0], args[1:]
 	switch format {
+	case "help", "-h", "--help":
+		fmt.Fprint(a.stdout, exportUsage)
+		return nil
 	case "good":
 		return a.exportGOOD(rest)
 	case "paimon":
@@ -26,7 +29,7 @@ func (a *app) runExport(args []string) error {
 	case "seelie":
 		return a.exportAchievements("seelie", "seelie.json", export.SeelieMe, rest)
 	}
-	fmt.Fprintf(a.stderr, "unknown export format %q (want good, paimon or seelie)\n", format)
+	fmt.Fprintf(a.stderr, "unknown export format %q\n\n%s", format, exportUsage)
 	return errUsage
 }
 

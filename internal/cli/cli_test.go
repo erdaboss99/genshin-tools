@@ -34,17 +34,30 @@ func TestExitCodes(t *testing.T) {
 		{[]string{"nonsense"}, 2},
 		{[]string{"version"}, 0},
 		{[]string{"help"}, 0},
+		{[]string{"scan"}, 2},
+		{[]string{"scan", "help"}, 0},
+		{[]string{"scan", "nonsense"}, 2},
+		{[]string{"scan", "artifacts", "-h"}, 0},
+		{[]string{"scan", "doctor", "-h"}, 0},
+		{[]string{"scan", "capture", "-h"}, 0},
+		{[]string{"scan", "achievements", "-h"}, 0},
+		{[]string{"artifacts", "-h"}, 2},
+		{[]string{"calibrate"}, 2},
+		{[]string{"doctor"}, 2},
+		{[]string{"export", "help"}, 0},
+		{[]string{"extract", "help"}, 0},
+		{[]string{"update-data", "-h"}, 0},
 		{[]string{"export"}, 2},
 		{[]string{"export", "csv"}, 2},
 		{[]string{"export", "good", "-h"}, 0},
 		{[]string{"export", "good", "--no-such-flag"}, 2},
 		{[]string{"export", "good", "stray"}, 2},
 		{[]string{"export", "good", "-i", "/does/not/exist.json"}, 1},
-		{[]string{"calibrate", "--screen", "bogus"}, 2},
-		{[]string{"weapons", "-h"}, 0},
-		{[]string{"weapons", "--no-such-flag"}, 2},
-		{[]string{"characters", "-h"}, 0},
-		{[]string{"characters", "--no-such-flag"}, 2},
+		{[]string{"scan", "calibrate", "--screen", "bogus"}, 2},
+		{[]string{"scan", "weapons", "-h"}, 0},
+		{[]string{"scan", "weapons", "--no-such-flag"}, 2},
+		{[]string{"scan", "characters", "-h"}, 0},
+		{[]string{"scan", "characters", "--no-such-flag"}, 2},
 		{[]string{"extract"}, 2},
 		{[]string{"extract", "csv"}, 2},
 		{[]string{"extract", "paimon", "-h"}, 0},
@@ -159,7 +172,7 @@ func mustJSON(t *testing.T, v any) string {
 }
 
 func TestPrintLayoutRoundTrips(t *testing.T) {
-	code, stdout, stderr := run(t, "calibrate", "--print-layout")
+	code, stdout, stderr := run(t, "scan", "calibrate", "--print-layout")
 	if code != 0 {
 		t.Fatalf("calibrate failed: %s", stderr)
 	}
@@ -246,7 +259,7 @@ func TestFailedScanSavesPartialResults(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "artifacts.json")
 
 	// Enough for the first frame's reads, then a failure partway through the second.
-	code, stdout, stderr := run(t, "artifacts", "--from-dir", frames, "--workers", "1", "--min-rarity", "1",
+	code, stdout, stderr := run(t, "scan", "artifacts", "--from-dir", frames, "--workers", "1", "--min-rarity", "1",
 		"--tesseract", failingTesseract(t, 8), "-o", out)
 	if code != 1 {
 		t.Errorf("exit code = %d, want 1", code)
@@ -274,7 +287,7 @@ func TestFailedScanKeepsEarlierReportWhenNothingWasRead(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	code, _, _ := run(t, "artifacts", "--from-dir", frames, "--tesseract", failingTesseract(t, 0), "-o", out)
+	code, _, _ := run(t, "scan", "artifacts", "--from-dir", frames, "--tesseract", failingTesseract(t, 0), "-o", out)
 	if code != 1 {
 		t.Errorf("exit code = %d, want 1", code)
 	}

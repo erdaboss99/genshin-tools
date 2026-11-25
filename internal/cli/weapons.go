@@ -49,7 +49,7 @@ func keepWeapons(records []scan.WeaponRecord, minRarity int) []scan.WeaponRecord
 
 func (a *app) runWeapons(ctx context.Context, args []string) error {
 	var opts weaponOptions
-	flags := a.newFlagSet("weapons")
+	flags := a.newFlagSet("scan weapons")
 	opts.register(flags)
 	if err := parseFlags(flags, args); err != nil {
 		return err
@@ -128,6 +128,6 @@ func (a *app) printWeaponSummary(records []scan.WeaponRecord, path string) {
 	}
 	fmt.Fprintf(a.stdout, "Report written to %s\n", path)
 	if withIssues > 0 {
-		fmt.Fprintln(a.stdout, `Check the "issues" fields in the report. If many fail the same way, run "genshin-tools calibrate --screen weapons".`)
+		fmt.Fprintln(a.stdout, `Check the "issues" fields in the report. If many fail the same way, run "genshin-tools scan calibrate --screen weapons".`)
 	}
 }

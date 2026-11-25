@@ -56,7 +56,7 @@ func (o *artifactOptions) register(flags *flag.FlagSet) {
 
 func (a *app) runArtifacts(ctx context.Context, args []string) error {
 	var opts artifactOptions
-	flags := a.newFlagSet("artifacts")
+	flags := a.newFlagSet("scan artifacts")
 	opts.register(flags)
 	if err := parseFlags(flags, args); err != nil {
 		return err
@@ -147,6 +147,6 @@ func (a *app) printArtifactSummary(s artifactSummary, path string) {
 		s.total, s.exportable, s.withIssues, s.corrected)
 	fmt.Fprintf(a.stdout, "Report written to %s\n", path)
 	if s.withIssues > 0 {
-		fmt.Fprintln(a.stdout, `Check the "issues" fields in the report. If many fail the same way, run "genshin-tools calibrate".`)
+		fmt.Fprintln(a.stdout, `Check the "issues" fields in the report. If many fail the same way, run "genshin-tools scan calibrate".`)
 	}
 }

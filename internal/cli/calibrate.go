@@ -72,7 +72,7 @@ var (
 
 func (a *app) runCalibrate(ctx context.Context, args []string) error {
 	var opts calibrateOptions
-	flags := a.newFlagSet("calibrate")
+	flags := a.newFlagSet("scan calibrate")
 	opts.register(flags)
 	if err := parseFlags(flags, args); err != nil {
 		return err
@@ -138,7 +138,7 @@ func (a *app) runCalibrate(ctx context.Context, args []string) error {
 		return err
 	}
 	fmt.Fprintf(a.stdout, "\nRegions drawn on %s. Each box should tightly contain the matching text.\n", opts.out)
-	fmt.Fprintln(a.stdout, `Adjust boxes with "calibrate --print-layout > layout.json", then pass --layout layout.json.`)
+	fmt.Fprintln(a.stdout, `Adjust boxes with "genshin-tools scan calibrate --print-layout > layout.json", then pass --layout layout.json.`)
 	return nil
 }
 

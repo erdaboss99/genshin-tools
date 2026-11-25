@@ -32,7 +32,7 @@ func (o *characterOptions) register(flags *flag.FlagSet) {
 
 func (a *app) runCharacters(ctx context.Context, args []string) error {
 	var opts characterOptions
-	flags := a.newFlagSet("characters")
+	flags := a.newFlagSet("scan characters")
 	opts.register(flags)
 	if err := parseFlags(flags, args); err != nil {
 		return err
@@ -82,6 +82,6 @@ func (a *app) printCharacterSummary(records []scan.CharacterRecord, path string)
 	fmt.Fprintf(a.stdout, "Scanned %d characters: %d exportable, %d with issues.\n", len(records), len(records)-withIssues, withIssues)
 	fmt.Fprintf(a.stdout, "Report written to %s\n", path)
 	if withIssues > 0 {
-		fmt.Fprintln(a.stdout, `Check the "issues" fields in the report. If many fail the same way, run "genshin-tools calibrate --screen characters".`)
+		fmt.Fprintln(a.stdout, `Check the "issues" fields in the report. If many fail the same way, run "genshin-tools scan calibrate --screen characters".`)
 	}
 }

@@ -32,7 +32,7 @@ func (r *doctorReport) info(message string) {
 }
 
 func (a *app) runDoctor(ctx context.Context, args []string) error {
-	flags := a.newFlagSet("doctor")
+	flags := a.newFlagSet("scan doctor")
 	var engineOpts engineFlags
 	engineOpts.register(flags)
 	if err := parseFlags(flags, args); err != nil {

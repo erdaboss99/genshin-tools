@@ -15,8 +15,12 @@ import (
 const paimonSource = "paimon.moe"
 
 func (a *app) runExtract(args []string) error {
+	if len(args) > 0 && (args[0] == "help" || args[0] == "-h" || args[0] == "--help") {
+		fmt.Fprint(a.stdout, extractUsage)
+		return nil
+	}
 	if len(args) == 0 || args[0] != "paimon" {
-		fmt.Fprintln(a.stderr, "usage: genshin-tools extract paimon [flags]")
+		fmt.Fprint(a.stderr, extractUsage)
 		return errUsage
 	}
 	var in, out, dataDir string

@@ -8,7 +8,7 @@ import (
 )
 
 func (a *app) runCapture(ctx context.Context, args []string) error {
-	flags := a.newFlagSet("capture")
+	flags := a.newFlagSet("scan capture")
 	out := flags.String("o", "screenshot.png", "file to write")
 	if err := parseFlags(flags, args); err != nil {
 		return err
