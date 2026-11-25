@@ -5,6 +5,8 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -164,6 +166,35 @@ func TestScanWeaponsNotesRepeatsWithoutIssues(t *testing.T) {
 		if len(r.Issues) != 0 {
 			t.Errorf("record %d has issues %v", r.Index, r.Issues)
 		}
+	}
+}
+
+func TestScanWeaponsSavesIssuesAndDropsLowRarities(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "issues")
+	fourStar, oneStar := weaponFrame(t, nameplateColors[4].color), weaponFrame(t, nameplateColors[1].color)
+	source := func(ctx context.Context, emit EmitFrame) error {
+		for i, frame := range []*image.RGBA{fourStar, fourStar, oneStar} {
+			if err := emit(Frame{Index: i, Source: "live", Image: frame}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	// A clean weapon, an unknown one, and an unknown one below the minimum rarity.
+	replies := []string{"Amos' Bow", "Lv. 1/20", "1", "Nonsense", "Lv. 1/20", "1", "Nonsense", "Lv. 1/20", "1"}
+	records, err := ScanWeapons(t.Context(), source, weaponParser(replies...), ScanOptions{Workers: 1, MinRarity: 3, SaveIssuesDir: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(records) != 2 || len(records[0].Issues) != 0 || len(records[1].Issues) == 0 {
+		t.Fatalf("records = %+v, want a clean one and one with issues", records)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].Name() != "frame-00001.png" {
+		t.Errorf("saved %v, want only frame-00001.png", entries)
 	}
 }
 

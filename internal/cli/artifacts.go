@@ -22,6 +22,7 @@ type artifactOptions struct {
 	out        string
 	fromDir    string
 	saveFrames string
+	saveIssues string
 	workers    int
 	limit      int
 	count      int
@@ -36,6 +37,7 @@ func (o *artifactOptions) register(flags *flag.FlagSet) {
 	flags.StringVar(&o.out, "o", "artifacts.json", "output report file")
 	flags.StringVar(&o.fromDir, "from-dir", "", "scan the screenshots in this directory instead of the live game")
 	flags.StringVar(&o.saveFrames, "save-frames", "", "also save each captured frame to this directory, for re-scanning with --from-dir")
+	flags.StringVar(&o.saveIssues, "save-issues", "", "save the screenshot of each artifact with issues to this directory, to check it or re-scan it with --from-dir")
 	flags.IntVar(&o.workers, "workers", defaultWorkers(), "number of parallel OCR processes")
 	flags.IntVar(&o.limit, "limit", 0, "stop after this many items (0 scans everything)")
 	flags.IntVar(&o.count, "count", 0, "number of items in the inventory (0 reads it from the screen)")
@@ -71,6 +73,7 @@ func (a *app) runArtifacts(ctx context.Context, args []string) error {
 	records, scanErr := scan.ScanArtifacts(ctx, source, parser, scan.ScanOptions{
 		Workers:       opts.workers,
 		SaveFramesDir: opts.saveFrames,
+		SaveIssuesDir: opts.saveIssues,
 		MinRarity:     opts.minRarity,
 		Log:           a.log,
 	})

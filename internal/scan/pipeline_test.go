@@ -81,6 +81,27 @@ func TestScanArtifactsSavesFrames(t *testing.T) {
 	}
 }
 
+func TestScanArtifactsSavesIssueFrames(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "issues")
+	source := func(_ context.Context, emit EmitFrame) error {
+		return emit(Frame{Index: 7, Source: "live:7", Image: blankFrame()})
+	}
+	// A blank frame reads as nothing, which is an artifact with issues.
+	records, err := ScanArtifacts(t.Context(), source, emptyParser(), ScanOptions{SaveIssuesDir: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(records) != 1 || len(records[0].Issues) == 0 {
+		t.Fatalf("records = %+v, want one with issues", records)
+	}
+	if records[0].Source != "live:7" {
+		t.Errorf("source = %q, want it left as the frame's own", records[0].Source)
+	}
+	if _, err := imaging.Load(filepath.Join(dir, "frame-00007.png")); err != nil {
+		t.Errorf("issue frame not saved under the frame's name: %v", err)
+	}
+}
+
 func TestDirFrames(t *testing.T) {
 	dir := t.TempDir()
 	for _, name := range []string{"b.png", "a.png", "c.PNG"} {

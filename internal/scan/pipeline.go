@@ -26,6 +26,9 @@ type ScanOptions struct {
 	Workers int
 	// SaveFramesDir, when set, stores each frame for later offline scans.
 	SaveFramesDir string
+	// SaveIssuesDir, when set, stores the frame behind each kept record with issues.
+	// Files are named like saved frames, so the directory can be scanned again.
+	SaveIssuesDir string
 	// MinRarity leaves out records below this rarity. Records with unknown rarity are
 	// kept, because discarding them would hide scan failures.
 	MinRarity int
@@ -44,8 +47,9 @@ func ScanArtifacts(ctx context.Context, source FrameSource, parser ArtifactParse
 				r.issue(duplicateFrameIssue)
 			}
 		},
-		index:  func(r ArtifactRecord) int { return r.Index },
-		rarity: func(r ArtifactRecord) game.Rarity { return r.Artifact.Rarity },
+		index:     func(r ArtifactRecord) int { return r.Index },
+		rarity:    func(r ArtifactRecord) game.Rarity { return r.Artifact.Rarity },
+		hasIssues: func(r ArtifactRecord) bool { return len(r.Issues) > 0 },
 	})
 }
 
@@ -61,8 +65,9 @@ func ScanWeapons(ctx context.Context, source FrameSource, parser WeaponParser, o
 				r.Notes = append(r.Notes, RepeatNote)
 			}
 		},
-		index:  func(r WeaponRecord) int { return r.Index },
-		rarity: func(r WeaponRecord) game.Rarity { return r.Rarity },
+		index:     func(r WeaponRecord) int { return r.Index },
+		rarity:    func(r WeaponRecord) game.Rarity { return r.Rarity },
+		hasIssues: func(r WeaponRecord) bool { return len(r.Issues) > 0 },
 	})
 }
 
@@ -82,12 +87,17 @@ type frameHandler[R any] struct {
 	index func(R) int
 	// rarity returns the record's rarity, zero when it is unknown.
 	rarity func(R) game.Rarity
+	// hasIssues reports whether the record has problems that may make it wrong.
+	hasIssues func(R) bool
 }
 
 func scanFrames[R any](ctx context.Context, source FrameSource, opts ScanOptions, noun string, h frameHandler[R]) ([]R, error) {
 	workers := max(opts.Workers, 1)
-	if opts.SaveFramesDir != "" {
-		if err := os.MkdirAll(opts.SaveFramesDir, 0o755); err != nil {
+	for _, dir := range []string{opts.SaveFramesDir, opts.SaveIssuesDir} {
+		if dir == "" {
+			continue
+		}
+		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return nil, err
 		}
 	}
@@ -161,6 +171,12 @@ func analyzeFrame[R any](ctx context.Context, frame Frame, h frameHandler[R], op
 	h.annotate(&record, frame, source)
 	if rarity := h.rarity(record); rarity != 0 && int(rarity) < opts.MinRarity {
 		return zero, true, nil
+	}
+	if opts.SaveIssuesDir != "" && h.hasIssues(record) {
+		path := filepath.Join(opts.SaveIssuesDir, fmt.Sprintf(savedFrameFormat, frame.Index))
+		if err := imaging.SavePNG(path, frame.Image); err != nil {
+			return zero, false, fmt.Errorf("save issue frame: %w", err)
+		}
 	}
 	return record, false, nil
 }
