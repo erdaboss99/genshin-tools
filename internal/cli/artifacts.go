@@ -5,19 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"runtime"
-	"slices"
 	"time"
 
 	"github.com/erdaboss99/genshin-tools/internal/scan"
 )
-
-// keepOnly filters artifact records in place by minimum rarity. Records with
-// unknown rarity are kept, because discarding them would hide scan failures.
-func keepOnly(records []scan.ArtifactRecord, minRarity int) []scan.ArtifactRecord {
-	return slices.DeleteFunc(records, func(r scan.ArtifactRecord) bool {
-		return r.Artifact.Rarity != 0 && int(r.Artifact.Rarity) < minRarity
-	})
-}
 
 func defaultWorkers() int {
 	return max(runtime.NumCPU()-1, 1)
@@ -80,13 +71,13 @@ func (a *app) runArtifacts(ctx context.Context, args []string) error {
 	records, scanErr := scan.ScanArtifacts(ctx, source, parser, scan.ScanOptions{
 		Workers:       opts.workers,
 		SaveFramesDir: opts.saveFrames,
+		MinRarity:     opts.minRarity,
 		Log:           a.log,
 	})
 	// A failure with nothing to show must not replace an earlier report.
 	if scanErr != nil && len(records) == 0 {
 		return scanErr
 	}
-	records = keepOnly(records, opts.minRarity)
 	if err := scan.WriteJSON(opts.out, scan.NewReport(records, scanErr == nil)); err != nil {
 		return err
 	}

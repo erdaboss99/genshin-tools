@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"slices"
 	"time"
 
 	"github.com/erdaboss99/genshin-tools/internal/scan"
@@ -39,14 +38,6 @@ func (o *weaponOptions) register(flags *flag.FlagSet) {
 	flags.DurationVar(&o.countdown, "countdown", defaultCountdown, "delay before a live scan starts")
 }
 
-// keepWeapons filters weapon records in place by minimum rarity. Records with
-// unknown rarity are kept, because discarding them would hide scan failures.
-func keepWeapons(records []scan.WeaponRecord, minRarity int) []scan.WeaponRecord {
-	return slices.DeleteFunc(records, func(r scan.WeaponRecord) bool {
-		return r.Rarity != 0 && int(r.Rarity) < minRarity
-	})
-}
-
 func (a *app) runWeapons(ctx context.Context, args []string) error {
 	var opts weaponOptions
 	flags := a.newFlagSet("scan weapons")
@@ -73,13 +64,13 @@ func (a *app) runWeapons(ctx context.Context, args []string) error {
 	records, scanErr := scan.ScanWeapons(ctx, source, parser, scan.ScanOptions{
 		Workers:       opts.workers,
 		SaveFramesDir: opts.saveFrames,
+		MinRarity:     opts.minRarity,
 		Log:           a.log,
 	})
 	// A failure with nothing to show must not replace an earlier report.
 	if scanErr != nil && len(records) == 0 {
 		return scanErr
 	}
-	records = keepWeapons(records, opts.minRarity)
 	if err := scan.WriteJSON(opts.out, scan.NewReport(records, scanErr == nil)); err != nil {
 		return err
 	}

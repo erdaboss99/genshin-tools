@@ -10,6 +10,7 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/erdaboss99/genshin-tools/internal/game"
 	"github.com/erdaboss99/genshin-tools/internal/imaging"
 )
 
@@ -25,7 +26,10 @@ type ScanOptions struct {
 	Workers int
 	// SaveFramesDir, when set, stores each frame for later offline scans.
 	SaveFramesDir string
-	Log           *slog.Logger
+	// MinRarity leaves out records below this rarity. Records with unknown rarity are
+	// kept, because discarding them would hide scan failures.
+	MinRarity int
+	Log       *slog.Logger
 }
 
 // ScanArtifacts analyzes frames from source using a worker pool, returning records
@@ -40,7 +44,8 @@ func ScanArtifacts(ctx context.Context, source FrameSource, parser ArtifactParse
 				r.issue(duplicateFrameIssue)
 			}
 		},
-		index: func(r ArtifactRecord) int { return r.Index },
+		index:  func(r ArtifactRecord) int { return r.Index },
+		rarity: func(r ArtifactRecord) game.Rarity { return r.Artifact.Rarity },
 	})
 }
 
@@ -56,7 +61,8 @@ func ScanWeapons(ctx context.Context, source FrameSource, parser WeaponParser, o
 				r.Notes = append(r.Notes, RepeatNote)
 			}
 		},
-		index: func(r WeaponRecord) int { return r.Index },
+		index:  func(r WeaponRecord) int { return r.Index },
+		rarity: func(r WeaponRecord) game.Rarity { return r.Rarity },
 	})
 }
 
@@ -74,6 +80,8 @@ type frameHandler[R any] struct {
 	annotate func(record *R, frame Frame, source string)
 	// index returns the record's frame position, for ordering.
 	index func(R) int
+	// rarity returns the record's rarity, zero when it is unknown.
+	rarity func(R) game.Rarity
 }
 
 func scanFrames[R any](ctx context.Context, source FrameSource, opts ScanOptions, noun string, h frameHandler[R]) ([]R, error) {
@@ -96,7 +104,7 @@ func scanFrames[R any](ctx context.Context, source FrameSource, opts ScanOptions
 	for range workers {
 		wg.Go(func() {
 			for frame := range queue {
-				record, skipped, err := analyzeFrame(workCtx, frame, h, opts.SaveFramesDir)
+				record, skipped, err := analyzeFrame(workCtx, frame, h, opts)
 				if err != nil {
 					cancelWork(err)
 					continue
@@ -135,19 +143,24 @@ func scanFrames[R any](ctx context.Context, source FrameSource, opts ScanOptions
 	return records, sourceErr
 }
 
-func analyzeFrame[R any](ctx context.Context, frame Frame, h frameHandler[R], saveDir string) (R, bool, error) {
+// analyzeFrame reads one frame. skipped is true for frames that show something else
+// and for records below the minimum rarity.
+func analyzeFrame[R any](ctx context.Context, frame Frame, h frameHandler[R], opts ScanOptions) (record R, skipped bool, err error) {
 	var zero R
 	source := frame.Source
-	if saveDir != "" {
-		source = filepath.Join(saveDir, fmt.Sprintf(savedFrameFormat, frame.Index))
+	if opts.SaveFramesDir != "" {
+		source = filepath.Join(opts.SaveFramesDir, fmt.Sprintf(savedFrameFormat, frame.Index))
 		if err := imaging.SavePNG(source, frame.Image); err != nil {
 			return zero, false, fmt.Errorf("save frame: %w", err)
 		}
 	}
-	record, skipped, err := h.parse(ctx, frame.Image)
-	if err != nil {
-		return zero, false, err
+	record, skipped, err = h.parse(ctx, frame.Image)
+	if err != nil || skipped {
+		return zero, skipped, err
 	}
 	h.annotate(&record, frame, source)
-	return record, skipped, nil
+	if rarity := h.rarity(record); rarity != 0 && int(rarity) < opts.MinRarity {
+		return zero, true, nil
+	}
+	return record, false, nil
 }
