@@ -25,6 +25,9 @@
 .env.*
 *.local
 
+# Personal helper script, which holds a machine-specific path
+/build.sh
+
 # Editors and tools
 .idea/
 .vscode/
