@@ -58,6 +58,8 @@ type CharacterScanner struct {
 	// SaveFramesDir, when set, stores a screenshot of each page that was read, so the
 	// results can be checked against what the screen showed.
 	SaveFramesDir string
+	// SaveIssuesDir, when set, stores the pages of each character with issues.
+	SaveIssuesDir string
 	Log           *slog.Logger
 }
 
@@ -105,8 +107,13 @@ func (s CharacterScanner) Scan(ctx context.Context) ([]CharacterRecord, error) {
 		}
 		record.Index = len(records)
 		record.Source = fmt.Sprintf(liveSourceFormat, record.Index)
-		if err := s.saveShots(record, shots); err != nil {
+		if err := saveShots(s.SaveFramesDir, record, shots); err != nil {
 			return s.finish(records), err
+		}
+		if len(record.Issues) > 0 {
+			if err := saveShots(s.SaveIssuesDir, record, shots); err != nil {
+				return s.finish(records), err
+			}
 		}
 		records = append(records, record)
 		if s.Log != nil {
@@ -366,12 +373,13 @@ func (s CharacterScanner) readTalentLevel(ctx context.Context, rect image.Rectan
 	return reading, raw, agreed, valid, err
 }
 
-// saveShots stores the pages read for a character, named by position and key.
-func (s CharacterScanner) saveShots(record CharacterRecord, shots *characterShots) error {
-	if s.SaveFramesDir == "" {
+// saveShots stores the pages read for a character in dir, named by position and key.
+// An empty dir saves nothing.
+func saveShots(dir string, record CharacterRecord, shots *characterShots) error {
+	if dir == "" {
 		return nil
 	}
-	if err := os.MkdirAll(s.SaveFramesDir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
 	name := cmp.Or(string(record.Character.Key), "unknown")
@@ -381,7 +389,7 @@ func (s CharacterScanner) saveShots(record CharacterRecord, shots *characterShot
 		if frame == nil {
 			continue
 		}
-		path := filepath.Join(s.SaveFramesDir, fmt.Sprintf("%03d-%s-%s.png", record.Index, name, page))
+		path := filepath.Join(dir, fmt.Sprintf("%03d-%s-%s.png", record.Index, name, page))
 		if err := imaging.SavePNG(path, frame); err != nil {
 			return fmt.Errorf("save frame: %w", err)
 		}

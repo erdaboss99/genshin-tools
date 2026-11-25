@@ -406,6 +406,33 @@ func TestCharacterScannerSavesPages(t *testing.T) {
 	}
 }
 
+func TestCharacterScannerSavesPagesOfCharactersWithIssues(t *testing.T) {
+	g := newCharacterGame(1, 0)
+	// Mona's normal attack can't be 11 without a bonus, so she gets an issue.
+	s := characterScanner(g,
+		"Pyro / Hu Tao", "Level 90 / 90", "Lv. 10", "Lv. 10", "Lv. 10",
+		"Hydro / Mona", "Level 20 / 20", "Lv. 11", "Lv. 1", "Lv. 1",
+		"Pyro / Hu Tao",
+	)
+	s.SaveIssuesDir = filepath.Join(t.TempDir(), "issues")
+	records, err := s.Scan(t.Context())
+	if err != nil || len(records) != 2 || len(records[0].Issues) != 0 || len(records[1].Issues) == 0 {
+		t.Fatalf("records = %+v, err = %v", records, err)
+	}
+	entries, err := os.ReadDir(s.SaveIssuesDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, e := range entries {
+		names = append(names, e.Name())
+	}
+	want := []string{"001-Mona-attributes.png", "001-Mona-constellation.png", "001-Mona-talents.png"}
+	if !slices.Equal(names, want) {
+		t.Errorf("saved %v, want %v", names, want)
+	}
+}
+
 func TestCharacterScannerIgnoresAMisreadWhileTheScreenFadesIn(t *testing.T) {
 	// The first read of Iansan's normal attack caught half-drawn text and gave 11. The
 	// next two agree on 1, so the wrong value is never accepted.
