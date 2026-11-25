@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"math"
 	"slices"
 	"testing"
 
@@ -46,15 +47,18 @@ type simulatedInventory struct {
 	materials     int
 	failAfter     int
 	stuckClicks   bool
+	// stack makes the items from stack[0] up to stack[1] identical copies.
+	stack [2]int
 	// reuseFrame shares one image between captures, for tests that consume each
 	// frame before capturing the next.
 	reuseFrame bool
 	frame      *image.RGBA
 
-	ticks   int
-	clicks  int
-	current int
-	visited []int
+	ticks    int
+	clicks   int
+	captures int
+	current  int
+	visited  []int
 }
 
 func (s *simulatedInventory) win() layout.Window {
@@ -83,11 +87,12 @@ func (s *simulatedInventory) Size() (int, int) { return s.width, s.height }
 
 func (s *simulatedInventory) MoveTo(int, int) error { return nil }
 
+// Scroll stops at both ends of the list, as the game does, so scrolling back up after
+// overshooting the bottom starts from the bottom, not from where the overshoot ended.
 func (s *simulatedInventory) Scroll(ticks int) error {
 	s.ticks += ticks
-	if s.ticks > 0 {
-		s.ticks = 0
-	}
+	limit := max(s.totalRows()-s.grid.RowsPerPage(s.win()), 0)
+	s.ticks = min(max(s.ticks, -int(math.Ceil(float64(limit)*s.grid.ScrollTicksPerRow))), 0)
 	return nil
 }
 
@@ -108,7 +113,10 @@ func (s *simulatedInventory) Click(x, y int) error {
 	} else {
 		row = top + (y-win.Y(s.grid.First.Y)+win.Len(s.grid.DeltaY)/2)/win.Len(s.grid.DeltaY)
 	}
-	s.current = row*s.grid.Columns + col
+	// Clicking an empty cell past the last item leaves the selection as it was.
+	if item := row*s.grid.Columns + col; item < s.artifacts+s.materials {
+		s.current = item
+	}
 	return nil
 }
 
@@ -118,10 +126,23 @@ func (s *simulatedInventory) Capture() (*image.RGBA, error) {
 		img = image.NewRGBA(image.Rect(0, 0, s.width, s.height))
 		s.frame = img
 	}
-	id := s.current + 1
+	// Something in the grid animates, as in the game, so the grid never looks the
+	// same twice and can't tell whether the list moved.
+	s.captures++
+	img.SetRGBA(s.win().X(s.grid.First.X), s.win().Y(s.grid.First.Y), color.RGBA{uint8(s.captures >> 8), uint8(s.captures), 3, 255})
+	id := s.panelID(s.current) + 1
 	item := color.RGBA{uint8(id >> 8), uint8(id), 7, 255}
 	draw.Draw(img, s.win().Rect(s.panel), image.NewUniform(item), image.Point{}, draw.Src)
 	return img, nil
+}
+
+// panelID is what the panel shows for item: the item itself, or the first item of
+// its stack of identical copies.
+func (s *simulatedInventory) panelID(item int) int {
+	if item >= s.stack[0] && item < s.stack[1] {
+		return s.stack[0]
+	}
+	return item
 }
 
 func (s *simulatedInventory) Type(string) error { return nil }
