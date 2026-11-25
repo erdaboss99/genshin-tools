@@ -8,7 +8,7 @@ import (
 
 const (
 	goodFormat = "GOOD"
-	goodSource = "gensin-tools"
+	goodSource = "genshin-tools"
 	// goodVersion is the GOOD format version emitted. Version 2 has the widest tool
 	// support, and tools ignore fields they don't recognize.
 	goodVersion = 2

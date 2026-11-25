@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	userAgent   = "gensin-tools (+https://github.com/erdaboss99/gensin-tools)"
+	userAgent   = "genshin-tools (+https://github.com/erdaboss99/genshin-tools)"
 	httpTimeout = 45 * time.Second
 )
 
